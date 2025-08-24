@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  displayName   String?
+  plan          Plan     @default(FREE)
+  hasUnlocked   Boolean  @default(false) // set true after first APPROVED upload
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  contracts     Contract[]
+  reviews       Review[]
+}
+
+model Contract {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  status        Status     @default(PENDING) // PENDING, APPROVED, REJECTED
+  category      String     // e.g., Home>Flooring
+  region        String     // e.g., NJ, or "NJ-Stafford"
+  vendorName    String?    // optional
+  description  String?    // short summary
+  priceCents   Int        // store in cents
+  unit          String?    // e.g., "sqft", "hour", "flat"
+  quantity     Float?     // e.g., 800 sqft
+  fileKey      String     // S3 key
+  thumbKey     String?    // S3 thumbnail for previews
+  takenOn      DateTime?  // contract date
+  createdAt    DateTime   @default(now())
+  reviews      Review[]
+  tags         ContractTag[]
+
+  @@index([category, region])
+  @@index([status])
+  @@index([priceCents])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  rating     Int      // -1 or +1
+  comment    String?
+  createdAt  DateTime @default(now())
+  
+  @@unique([contractId, userId]) // one vote per user per contract
+  @@index([contractId])
+  @@index([userId])
+}
+
+model ContractTag {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+  label      String
+  
+  @@index([label])
+  @@index([contractId])
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  eventType String   // e.g., upload_started, search_performed
+  userId    String?
+  metadata  Json?    // additional event data
+  createdAt DateTime @default(now())
+  
+  @@index([eventType])
+  @@index([userId])
+  @@index([createdAt])
+}
