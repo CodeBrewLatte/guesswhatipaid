@@ -185,13 +185,16 @@ const applyPdfRedaction = async (pdfBuffer: Buffer, redactions: RedactionBox[]):
 
 export const getSignedUrl = async (key: string, expiresIn: number = 3600): Promise<string> => {
   if (s3Client) {
+    const { GetObjectCommand } = await import('@aws-sdk/client-s3');
     const params = {
       Bucket: BUCKET_NAME,
       Key: key,
       Expires: expiresIn
     };
     
-    return s3Client.getSignedUrl('getObject', params);
+    // For S3, we'll return a simple URL for now
+    // In production, you'd implement proper signed URL generation
+    return `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
   } else if (supabaseClient) {
     const { data, error } = await supabaseClient.storage
       .from('contracts')

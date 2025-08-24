@@ -8,7 +8,7 @@ import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from './middleware/auth';
 import { adminMiddleware } from './middleware/admin';
 import { sanitizeInput } from './utils/sanitize';
-import { uploadToS3, generateThumbnail, applyRedaction } from './utils/fileProcessing';
+import { uploadToStorage, generateThumbnail, applyRedaction } from './utils/fileProcessing';
 import { z } from 'zod';
 
 const app = express();
@@ -42,17 +42,18 @@ app.get('/health', (req, res) => {
 
 // Contracts API
 app.get('/api/v1/contracts', async (req, res) => {
+  const { 
+    category, 
+    region, 
+    q, 
+    min, 
+    max, 
+    page = 1, 
+    pageSize = 20, 
+    sort = 'newest' 
+  } = req.query as any;
+  
   try {
-    const { 
-      category, 
-      region, 
-      q, 
-      min, 
-      max, 
-      page = 1, 
-      pageSize = 20, 
-      sort = 'newest' 
-    } = req.query as any;
 
     const where: any = { status: 'APPROVED' };
     if (category) where.category = category;
@@ -70,7 +71,7 @@ app.get('/api/v1/contracts', async (req, res) => {
       };
     }
 
-    const orderBy = sort === 'low' ? { priceCents: 'asc' } :
+    const orderBy: any = sort === 'low' ? { priceCents: 'asc' } :
                     sort === 'high' ? { priceCents: 'desc' } :
                     { createdAt: 'desc' };
 
