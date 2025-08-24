@@ -11,6 +11,7 @@ interface Contract {
   priceCents: number
   description?: string
   vendorName?: string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
   createdAt: string
   user: {
     email: string
