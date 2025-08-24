@@ -88,7 +88,7 @@ export default function UploadPage() {
         if (value) {
           if (key === 'tags' && Array.isArray(value)) {
             value.forEach(tag => formData.append('tags[]', tag))
-          } else {
+          } else if (typeof value === 'string') {
             formData.append(key, value)
           }
         }
