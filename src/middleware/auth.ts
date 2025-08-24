@@ -42,7 +42,10 @@ export const authMiddleware = async (
       return res.status(401).json({ error: 'User not found' });
     }
 
-    req.user = user;
+    req.user = {
+      ...user,
+      displayName: user.displayName || undefined
+    };
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
