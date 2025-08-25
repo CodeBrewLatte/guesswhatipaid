@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { supabase } from '../src/utils/supabase';
 
 interface RegionSetupModalProps {
   isOpen: boolean;
@@ -71,11 +72,19 @@ export function RegionSetupModal({ isOpen, onClose, onRegionSet }: RegionSetupMo
 
     setLoading(true);
     try {
+      // Get the current session token from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('No active session');
+      }
+
       // Update user region
       const response = await fetch('/api/v1/users/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ region: selectedRegion }),
       });
@@ -83,6 +92,9 @@ export function RegionSetupModal({ isOpen, onClose, onRegionSet }: RegionSetupMo
       if (response.ok) {
         onRegionSet(selectedRegion);
         onClose();
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to update region:', errorData);
       }
     } catch (error) {
       console.error('Error updating region:', error);
