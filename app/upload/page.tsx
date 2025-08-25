@@ -250,7 +250,7 @@ export default function UploadPage() {
                     <MetadataForm
         onComplete={handleMetadataComplete}
         onBack={() => setCurrentStep('redact')}
-        userRegion={user?.region || 'Unknown'}
+        userRegion={user?.region || 'Not Set'}
       />
             </div>
           )}

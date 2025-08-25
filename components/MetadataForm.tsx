@@ -65,6 +65,11 @@ export function MetadataForm({ onComplete, onBack }: MetadataFormProps) {
       newErrors.quantity = 'Quantity must be a positive number'
     }
 
+    // Check if user has a region set
+    if (userRegion === 'Not Set') {
+      newErrors.region = 'You must set your state before uploading contracts'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -127,15 +132,40 @@ export function MetadataForm({ onComplete, onBack }: MetadataFormProps) {
           )}
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800">
-            <strong>Your Region:</strong> {userRegion}
-          </p>
-          <p className="text-xs text-blue-600 mt-1">
-            Contracts are automatically associated with your state
-          </p>
-        </div>
+        {userRegion !== 'Not Set' ? (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              <strong>Your Region:</strong> {userRegion}
+            </p>
+            <p className="text-xs text-blue-600 mt-1">
+              Contracts are automatically associated with your state
+            </p>
+          </div>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-sm text-yellow-800">
+              <strong>Region Not Set:</strong> Please set your state in your profile
+            </p>
+            <p className="text-xs text-yellow-600 mt-1">
+              You need to set your state before uploading contracts
+            </p>
+            <button 
+              type="button"
+              onClick={() => window.location.href = '/profile'}
+              className="mt-2 text-xs bg-yellow-600 text-white px-3 py-1 rounded hover:bg-yellow-700"
+            >
+              Set Region
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Region Error */}
+      {errors.region && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-800">{errors.region}</p>
+        </div>
+      )}
 
       {/* Price and Unit */}
       <div className="grid md:grid-cols-3 gap-6">
