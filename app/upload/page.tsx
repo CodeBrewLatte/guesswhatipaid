@@ -32,7 +32,7 @@ interface UploadData {
 }
 
 export default function UploadPage() {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const isSignedIn = !!user
   const [currentStep, setCurrentStep] = useState<UploadStep>('upload')
   const [uploadData, setUploadData] = useState<UploadData>({
@@ -163,6 +163,31 @@ export default function UploadPage() {
               <Link href="/upload" className="text-primary-600 font-medium">
                 Upload
               </Link>
+              <div className="flex items-center space-x-3">
+                <Link href="/profile" className="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
+                  <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+                    {user?.user_metadata?.avatar_url ? (
+                      <img 
+                        src={user.user_metadata.avatar_url} 
+                        alt="Profile" 
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : user?.displayName ? (
+                      <span className="text-sm font-medium text-primary-600">
+                        {user.displayName.charAt(0).toUpperCase()}
+                      </span>
+                    ) : (
+                      <span className="text-sm font-medium text-primary-600">
+                        {user?.email?.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm font-medium hidden sm:block">Profile</span>
+                </Link>
+                <button onClick={() => signOut()} className="text-gray-700 hover:text-gray-900 font-medium">
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         </div>

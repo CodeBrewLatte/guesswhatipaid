@@ -5,8 +5,7 @@ export async function PUT(request: NextRequest) {
   try {
     const supabase = createServerSupabaseClient();
     
-    // Get the user from the request (you'll need to implement auth middleware)
-    // For now, let's get the user from the Authorization header
+    // Get the user from the request
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -28,8 +27,11 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Parse the request body
-    const { region } = await request.json();
+    // Parse multipart form data
+    const formData = await request.formData();
+    const displayName = formData.get('displayName') as string;
+    const region = formData.get('region') as string;
+    const profileImage = formData.get('profileImage') as File | null;
     
     if (!region) {
       return NextResponse.json(
@@ -38,24 +40,71 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Update the user's region in the database
+    // Handle profile image upload if provided
+    let avatarUrl = null;
+    if (profileImage) {
+      try {
+        // Upload image to Supabase Storage
+        const fileName = `profile-${user.id}-${Date.now()}.${profileImage.name.split('.').pop()}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, profileImage, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          return NextResponse.json(
+            { error: 'Failed to upload profile image' },
+            { status: 500 }
+          );
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+        
+        avatarUrl = urlData.publicUrl;
+      } catch (uploadError) {
+        console.error('Error handling image upload:', uploadError);
+        return NextResponse.json(
+          { error: 'Failed to process profile image' },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Update user data
+    const updateData: any = { 
+      region: region,
+      displayName: displayName || null
+    };
+
+    if (avatarUrl) {
+      updateData.avatarUrl = avatarUrl;
+    }
+
     const { error: updateError } = await supabase
       .from('User')
-      .update({ region: region })
+      .update(updateData)
       .eq('id', user.id);
 
     if (updateError) {
-      console.error('Error updating user region:', updateError);
+      console.error('Error updating user profile:', updateError);
       return NextResponse.json(
-        { error: 'Failed to update region' },
+        { error: 'Failed to update profile' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({ 
       success: true, 
-      message: 'Region updated successfully',
-      region: region
+      message: 'Profile updated successfully',
+      region: region,
+      displayName: displayName,
+      avatarUrl: avatarUrl
     });
 
   } catch (error) {

@@ -6,9 +6,13 @@ import Link from 'next/link';
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const [displayName, setDisplayName] = useState('');
   const [region, setRegion] = useState('');
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error'>('success');
 
   // US states for region selection
   const usStates = [
@@ -65,40 +69,77 @@ export default function ProfilePage() {
   ];
 
   useEffect(() => {
-    if (user?.region) {
-      setRegion(user.region);
+    if (user) {
+      // Set display name (from Google SSO or existing data)
+      if (user.user_metadata?.full_name) {
+        setDisplayName(user.user_metadata.full_name);
+      } else if (user.displayName) {
+        setDisplayName(user.displayName);
+      }
+      
+      // Set region if it exists
+      if (user.region) {
+        setRegion(user.region);
+      }
+      
+      // Set profile image URL if it exists
+      if (user.user_metadata?.avatar_url) {
+        setProfileImageUrl(user.user_metadata.avatar_url);
+      }
     }
-  }, [user?.region]);
+  }, [user]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileImage(file);
+      // Create preview URL
+      const url = URL.createObjectURL(file);
+      setProfileImageUrl(url);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
+    setMessageType('success');
 
     if (!region) {
       setMessage('Please select your state');
+      setMessageType('error');
       setLoading(false);
       return;
     }
 
     try {
-      // Update user region in your backend
+      // Create form data for multipart upload
+      const formData = new FormData();
+      formData.append('displayName', displayName);
+      formData.append('region', region);
+      if (profileImage) {
+        formData.append('profileImage', profileImage);
+      }
+
+      // Update user profile
       const response = await fetch('/api/v1/users/profile', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ region }),
+        body: formData,
       });
 
       if (response.ok) {
-        setMessage('Region updated successfully!');
-        // You might want to refresh the user context here
+        setMessage('Profile updated successfully!');
+        setMessageType('success');
+        // Clear the file input
+        setProfileImage(null);
       } else {
-        setMessage('Failed to update region');
+        const errorData = await response.json();
+        setMessage(errorData.error || 'Failed to update profile');
+        setMessageType('error');
       }
     } catch (error) {
-      setMessage('Error updating region');
+      setMessage('Error updating profile');
+      setMessageType('error');
     } finally {
       setLoading(false);
     }
@@ -143,6 +184,43 @@ export default function ProfilePage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Profile Settings</h1>
           
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Profile Image */}
+            <div className="text-center">
+              <div className="relative inline-block">
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-primary-100 border-4 border-white shadow-lg">
+                  {profileImageUrl ? (
+                    <img 
+                      src={profileImageUrl} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-2xl font-bold text-primary-600">
+                        {displayName ? displayName.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <label htmlFor="profile-image" className="absolute bottom-0 right-0 bg-primary-600 text-white rounded-full p-2 cursor-pointer hover:bg-primary-700 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </label>
+                <input
+                  id="profile-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </div>
+              <p className="mt-2 text-sm text-gray-500">
+                Click the camera icon to upload a profile picture
+              </p>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
@@ -153,6 +231,25 @@ export default function ProfilePage() {
                 disabled
                 className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
               />
+              <p className="mt-1 text-sm text-gray-500">
+                Email cannot be changed
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Display Name
+              </label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Enter your display name"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                This name will be displayed on your contracts and reviews
+              </p>
             </div>
 
             <div>
@@ -179,7 +276,7 @@ export default function ProfilePage() {
 
             {message && (
               <div className={`p-4 rounded-md ${
-                message.includes('successfully') 
+                messageType === 'success'
                   ? 'bg-green-50 border border-green-200 text-green-800' 
                   : 'bg-red-50 border border-red-200 text-red-800'
               }`}>
