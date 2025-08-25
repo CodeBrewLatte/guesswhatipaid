@@ -27,11 +27,26 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Parse multipart form data
-    const formData = await request.formData();
-    const displayName = formData.get('displayName') as string;
-    const region = formData.get('region') as string;
-    const profileImage = formData.get('profileImage') as File | null;
+    // Parse request data - handle both JSON and multipart form data
+    let displayName: string | null = null;
+    let region: string | null = null;
+    let profileImage: File | null = null;
+
+    const contentType = request.headers.get('content-type');
+    
+    if (contentType?.includes('multipart/form-data')) {
+      // Handle multipart form data (for profile updates with images)
+      const formData = await request.formData();
+      displayName = formData.get('displayName') as string;
+      region = formData.get('region') as string;
+      profileImage = formData.get('profileImage') as File | null;
+    } else {
+      // Handle JSON data (for simple region updates)
+      const jsonData = await request.json();
+      displayName = jsonData.displayName || null;
+      region = jsonData.region || null;
+      profileImage = null; // No image in JSON requests
+    }
     
     if (!region) {
       return NextResponse.json(

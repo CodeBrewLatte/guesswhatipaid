@@ -79,7 +79,7 @@ export function RegionSetupModal({ isOpen, onClose, onRegionSet }: RegionSetupMo
         throw new Error('No active session');
       }
 
-      // Update user region
+      // Update user region - send as JSON for simple region updates
       const response = await fetch('/api/v1/users/profile', {
         method: 'PUT',
         headers: {
