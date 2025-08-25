@@ -8,7 +8,7 @@ interface MetadataFormProps {
   userRegion: string // Add user's region
 }
 
-export function MetadataForm({ onComplete, onBack }: MetadataFormProps) {
+export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormProps) {
   const [formData, setFormData] = useState({
     category: '',
     priceCents: '',

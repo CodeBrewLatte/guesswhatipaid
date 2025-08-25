@@ -1,10 +1,28 @@
 'use client';
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '../src/contexts/AuthContext'
+import { RegionSetupModal } from '@/components/RegionSetupModal'
 
 export default function HomePage() {
   const { user, signOut } = useAuth();
+  const [showRegionModal, setShowRegionModal] = useState(false);
+
+  // Show region modal for new users without a region
+  useEffect(() => {
+    if (user && !user.region) {
+      // Small delay to let the page load first
+      const timer = setTimeout(() => setShowRegionModal(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
+
+  const handleRegionSet = (region: string) => {
+    // Update the user context or refresh user data
+    // For now, just close the modal
+    setShowRegionModal(false);
+  };
 
   return (
     <div className="min-h-screen">
@@ -204,6 +222,13 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Region Setup Modal */}
+      <RegionSetupModal
+        isOpen={showRegionModal}
+        onClose={() => setShowRegionModal(false)}
+        onRegionSet={handleRegionSet}
+      />
     </div>
   )
 }
