@@ -3,280 +3,154 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🌱 Starting database seed...')
+  console.log('🌱 Seeding database...')
 
-  // Create sample users
-  const user1 = await prisma.user.upsert({
-    where: { email: 'john@example.com' },
-    update: {},
-    create: {
-      email: 'john@example.com',
-      displayName: 'John Smith',
-      hasUnlocked: true
-    }
-  })
+  // Create US states/regions
+  const regions = [
+    { code: 'AL', name: 'Alabama' },
+    { code: 'AK', name: 'Alaska' },
+    { code: 'AZ', name: 'Arizona' },
+    { code: 'AR', name: 'Arkansas' },
+    { code: 'CA', name: 'California' },
+    { code: 'CO', name: 'Colorado' },
+    { code: 'CT', name: 'Connecticut' },
+    { code: 'DE', name: 'Delaware' },
+    { code: 'FL', name: 'Florida' },
+    { code: 'GA', name: 'Georgia' },
+    { code: 'HI', name: 'Hawaii' },
+    { code: 'ID', name: 'Idaho' },
+    { code: 'IL', name: 'Illinois' },
+    { code: 'IN', name: 'Indiana' },
+    { code: 'IA', name: 'Iowa' },
+    { code: 'KS', name: 'Kansas' },
+    { code: 'KY', name: 'Kentucky' },
+    { code: 'LA', name: 'Louisiana' },
+    { code: 'ME', name: 'Maine' },
+    { code: 'MD', name: 'Maryland' },
+    { code: 'MA', name: 'Massachusetts' },
+    { code: 'MI', name: 'Michigan' },
+    { code: 'MN', name: 'Minnesota' },
+    { code: 'MS', name: 'Mississippi' },
+    { code: 'MO', name: 'Missouri' },
+    { code: 'MT', name: 'Montana' },
+    { code: 'NE', name: 'Nebraska' },
+    { code: 'NV', name: 'Nevada' },
+    { code: 'NH', name: 'New Hampshire' },
+    { code: 'NJ', name: 'New Jersey' },
+    { code: 'NM', name: 'New Mexico' },
+    { code: 'NY', name: 'New York' },
+    { code: 'NC', name: 'North Carolina' },
+    { code: 'ND', name: 'North Dakota' },
+    { code: 'OH', name: 'Ohio' },
+    { code: 'OK', name: 'Oklahoma' },
+    { code: 'OR', name: 'Oregon' },
+    { code: 'PA', name: 'Pennsylvania' },
+    { code: 'RI', name: 'Rhode Island' },
+    { code: 'SC', name: 'South Carolina' },
+    { code: 'SD', name: 'South Dakota' },
+    { code: 'TN', name: 'Tennessee' },
+    { code: 'TX', name: 'Texas' },
+    { code: 'UT', name: 'Utah' },
+    { code: 'VT', name: 'Vermont' },
+    { code: 'VA', name: 'Virginia' },
+    { code: 'WA', name: 'Washington' },
+    { code: 'WV', name: 'West Virginia' },
+    { code: 'WI', name: 'Wisconsin' },
+    { code: 'WY', name: 'Wyoming' }
+  ]
 
-  const user2 = await prisma.user.upsert({
-    where: { email: 'sarah@example.com' },
-    update: {},
-    create: {
-      email: 'sarah@example.com',
-      displayName: 'Sarah Johnson',
-      hasUnlocked: true
-    }
-  })
+  console.log('📍 Creating regions...')
+  for (const region of regions) {
+    await prisma.region.upsert({
+      where: { code: region.code },
+      update: {},
+      create: region
+    })
+  }
 
-  const user3 = await prisma.user.upsert({
-    where: { email: 'mike@example.com' },
-    update: {},
-    create: {
-      email: 'mike@example.com',
-      displayName: 'Mike Wilson',
-      hasUnlocked: false
-    }
-  })
-
-  console.log('✅ Users created')
-
-  // Sample categories and regions
+  // Create categories
   const categories = [
-    'Home>Flooring',
-    'Home>Kitchen',
-    'Home>Bathroom',
-    'Home>Roofing',
-    'Auto>Brakes',
-    'Auto>Oil Change',
-    'Auto>Tires',
-    'Legal>Contract Review',
-    'Legal>Estate Planning',
-    'Professional>Web Design',
-    'Professional>Consulting'
-  ]
-
-  const regions = ['NJ', 'NY', 'CA', 'TX', 'FL', 'IL']
-
-  // Create sample contracts
-  const contracts = [
     // Home & Garden
-    {
-      userId: user1.id,
-      category: 'Home>Flooring',
-      region: 'NJ',
-      priceCents: 12000,
-      unit: 'sqft',
-      quantity: 800,
-      description: 'Hardwood floor installation - 800 sqft of oak flooring',
-      vendorName: 'Premium Floors Inc',
-      takenOn: new Date('2024-01-15'),
-      status: 'APPROVED' as const,
-      tags: ['hardwood', 'oak', 'installation']
-    },
-    {
-      userId: user1.id,
-      category: 'Home>Kitchen',
-      region: 'NJ',
-      priceCents: 25000,
-      unit: 'flat',
-      description: 'Complete kitchen remodel including cabinets, countertops, and appliances',
-      vendorName: 'Kitchen Masters',
-      takenOn: new Date('2024-02-20'),
-      status: 'APPROVED' as const,
-      tags: ['remodel', 'cabinets', 'countertops']
-    },
-    {
-      userId: user2.id,
-      category: 'Home>Bathroom',
-      region: 'NY',
-      priceCents: 8500,
-      unit: 'flat',
-      description: 'Bathroom renovation with new tile, fixtures, and vanity',
-      vendorName: 'Bathroom Pros',
-      takenOn: new Date('2024-01-30'),
-      status: 'APPROVED' as const,
-      tags: ['renovation', 'tile', 'fixtures']
-    },
-    {
-      userId: user2.id,
-      category: 'Home>Roofing',
-      region: 'NY',
-      priceCents: 18000,
-      unit: 'sqft',
-      quantity: 1200,
-      description: 'Asphalt shingle roof replacement for 1200 sqft home',
-      vendorName: 'Roof Right',
-      takenOn: new Date('2024-03-10'),
-      status: 'APPROVED' as const,
-      tags: ['asphalt', 'shingles', 'replacement']
-    },
-
-    // Auto & Transport
-    {
-      userId: user1.id,
-      category: 'Auto>Brakes',
-      region: 'CA',
-      priceCents: 450,
-      unit: 'flat',
-      description: 'Front brake pad replacement and rotor resurfacing',
-      vendorName: 'Quick Fix Auto',
-      takenOn: new Date('2024-02-15'),
-      status: 'APPROVED' as const,
-      tags: ['brakes', 'pads', 'rotors']
-    },
-    {
-      userId: user2.id,
-      category: 'Auto>Oil Change',
-      region: 'CA',
-      priceCents: 65,
-      unit: 'flat',
-      description: 'Full synthetic oil change with filter replacement',
-      vendorName: 'Jiffy Lube',
-      takenOn: new Date('2024-03-05'),
-      status: 'APPROVED' as const,
-      tags: ['oil', 'synthetic', 'filter']
-    },
-    {
-      userId: user1.id,
-      category: 'Auto>Tires',
-      region: 'TX',
-      priceCents: 800,
-      unit: 'flat',
-      description: 'Four new all-season tires with mounting and balancing',
-      vendorName: 'Tire World',
-      takenOn: new Date('2024-01-25'),
-      status: 'APPROVED' as const,
-      tags: ['tires', 'all-season', 'mounting']
-    },
-
-    // Legal Services
-    {
-      userId: user2.id,
-      category: 'Legal>Contract Review',
-      region: 'TX',
-      priceCents: 500,
-      unit: 'hour',
-      quantity: 2,
-      description: 'Contract review and negotiation for business agreement',
-      vendorName: 'Smith & Associates Law',
-      takenOn: new Date('2024-02-28'),
-      status: 'APPROVED' as const,
-      tags: ['contract', 'review', 'business']
-    },
-    {
-      userId: user1.id,
-      category: 'Legal>Estate Planning',
-      region: 'FL',
-      priceCents: 1500,
-      unit: 'flat',
-      description: 'Complete estate planning including will and trust documents',
-      vendorName: 'Estate Law Partners',
-      takenOn: new Date('2024-03-01'),
-      status: 'APPROVED' as const,
-      tags: ['estate', 'planning', 'will', 'trust']
-    },
-
-    // Professional Services
-    {
-      userId: user2.id,
-      category: 'Professional>Web Design',
-      region: 'FL',
-      priceCents: 3000,
-      unit: 'flat',
-      description: 'Professional website design for small business',
-      vendorName: 'Digital Creations',
-      takenOn: new Date('2024-02-10'),
-      status: 'APPROVED' as const,
-      tags: ['website', 'design', 'business']
-    },
-    {
-      userId: user1.id,
-      category: 'Professional>Consulting',
-      region: 'IL',
-      priceCents: 150,
-      unit: 'hour',
-      quantity: 20,
-      description: 'Business strategy consulting for startup company',
-      vendorName: 'Strategic Solutions',
-      takenOn: new Date('2024-01-20'),
-      status: 'APPROVED' as const,
-      tags: ['consulting', 'strategy', 'startup']
-    },
-
-    // Some pending contracts
-    {
-      userId: user3.id,
-      category: 'Home>Flooring',
-      region: 'IL',
-      priceCents: 9500,
-      unit: 'sqft',
-      quantity: 600,
-      description: 'Laminate flooring installation for basement',
-      vendorName: 'Basement Floors',
-      takenOn: new Date('2024-03-15'),
-      status: 'PENDING' as const,
-      tags: ['laminate', 'basement', 'installation']
-    }
-  ]
-
-  for (const contractData of contracts) {
-    const { tags, ...contractFields } = contractData
+    { name: 'Home & Garden', description: 'Home improvement and garden services' },
+    { name: 'Kitchen & Bath', description: 'Kitchen and bathroom renovations' },
+    { name: 'Flooring', description: 'Flooring installation and repair' },
+    { name: 'Roofing', description: 'Roof installation, repair, and maintenance' },
+    { name: 'Plumbing', description: 'Plumbing services and repairs' },
+    { name: 'Electrical', description: 'Electrical work and repairs' },
+    { name: 'HVAC', description: 'Heating, ventilation, and air conditioning' },
+    { name: 'Painting', description: 'Interior and exterior painting' },
+    { name: 'Landscaping', description: 'Landscape design and maintenance' },
+    { name: 'Fencing', description: 'Fence installation and repair' },
+    { name: 'Windows & Doors', description: 'Window and door installation' },
+    { name: 'Siding', description: 'Exterior siding installation' },
+    { name: 'Deck & Patio', description: 'Deck and patio construction' },
+    { name: 'Garage & Shed', description: 'Garage and shed construction' },
     
-    const contract = await prisma.contract.create({
-      data: {
-        ...contractFields,
-        fileKey: `sample/contract-${Math.random().toString(36).substr(2, 9)}.pdf`,
-        thumbKey: `sample/thumb-${Math.random().toString(36).substr(2, 9)}.jpg`,
-        tags: {
-          create: tags.map(label => ({ label }))
-        }
-      }
-    })
-
-    // Add some reviews for approved contracts
-    if (contract.status === 'APPROVED') {
-      const numReviews = Math.floor(Math.random() * 3) + 1
-      const users = [user1, user2]
-      
-      for (let i = 0; i < numReviews; i++) {
-        const user = users[Math.floor(Math.random() * users.length)]
-        if (user.id !== contract.userId) {
-          await prisma.review.create({
-            data: {
-              contractId: contract.id,
-              userId: user.id,
-              rating: Math.random() > 0.3 ? 1 : -1,
-              comment: Math.random() > 0.5 ? 'Great service and fair pricing!' : null
-            }
-          })
-        }
-      }
-    }
-  }
-
-  console.log('✅ Contracts and reviews created')
-
-  // Create some sample events
-  const events = [
-    { eventType: 'upload_started', userId: user1.id },
-    { eventType: 'upload_submitted', userId: user1.id },
-    { eventType: 'search_performed', userId: user2.id },
-    { eventType: 'result_clicked', userId: user2.id }
+    // Auto & Transport
+    { name: 'Auto & Transport', description: 'Automotive and transportation services' },
+    { name: 'Car Repair', description: 'General car repair and maintenance' },
+    { name: 'Auto Body', description: 'Auto body repair and paint' },
+    { name: 'Towing', description: 'Vehicle towing services' },
+    { name: 'Car Wash', description: 'Car washing and detailing' },
+    { name: 'Tire Service', description: 'Tire sales and service' },
+    
+    // Professional Services
+    { name: 'Professional Services', description: 'Business and professional services' },
+    { name: 'Legal', description: 'Legal services and consultation' },
+    { name: 'Accounting', description: 'Accounting and bookkeeping services' },
+    { name: 'Marketing', description: 'Marketing and advertising services' },
+    { name: 'Web Design', description: 'Website design and development' },
+    { name: 'Graphic Design', description: 'Graphic design services' },
+    { name: 'Photography', description: 'Photography services' },
+    { name: 'Video Production', description: 'Video production and editing' },
+    
+    // Health & Wellness
+    { name: 'Health & Wellness', description: 'Health and wellness services' },
+    { name: 'Personal Training', description: 'Personal fitness training' },
+    { name: 'Massage Therapy', description: 'Massage therapy services' },
+    { name: 'Dental', description: 'Dental services' },
+    { name: 'Vision', description: 'Vision and eye care services' },
+    
+    // Events & Entertainment
+    { name: 'Events & Entertainment', description: 'Event planning and entertainment' },
+    { name: 'Event Planning', description: 'Event planning and coordination' },
+    { name: 'Catering', description: 'Catering services' },
+    { name: 'DJ Services', description: 'DJ and music services' },
+    { name: 'Photography', description: 'Event photography' },
+    
+    // Technology
+    { name: 'Technology', description: 'Technology and IT services' },
+    { name: 'Computer Repair', description: 'Computer and laptop repair' },
+    { name: 'IT Support', description: 'IT support and consulting' },
+    { name: 'Software Development', description: 'Custom software development' },
+    { name: 'Data Recovery', description: 'Data recovery services' },
+    
+    // Education & Training
+    { name: 'Education & Training', description: 'Educational and training services' },
+    { name: 'Tutoring', description: 'Academic tutoring services' },
+    { name: 'Language Lessons', description: 'Language learning services' },
+    { name: 'Music Lessons', description: 'Music instruction' },
+    { name: 'Driving Lessons', description: 'Driving instruction' },
+    
+    // Other
+    { name: 'Other', description: 'Other services not listed above' }
   ]
 
-  for (const eventData of events) {
-    await prisma.event.create({
-      data: eventData
+  console.log('🏷️ Creating categories...')
+  for (const category of categories) {
+    await prisma.category.upsert({
+      where: { name: category.name },
+      update: {},
+      create: category
     })
   }
 
-  console.log('✅ Events created')
-
-  console.log('🎉 Database seeding completed!')
-  console.log(`Created ${contracts.length} contracts with sample data`)
+  console.log('✅ Database seeded successfully!')
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seeding:', e)
+    console.error('❌ Error seeding database:', e)
     process.exit(1)
   })
   .finally(async () => {

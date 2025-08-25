@@ -9,10 +9,65 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [region, setRegion] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { signUp, signInWithGoogle } = useAuth();
   const router = useRouter();
+
+  // US states for region selection
+  const usStates = [
+    { code: 'AL', name: 'Alabama' },
+    { code: 'AK', name: 'Alaska' },
+    { code: 'AZ', name: 'Arizona' },
+    { code: 'AR', name: 'Arkansas' },
+    { code: 'CA', name: 'California' },
+    { code: 'CO', name: 'Colorado' },
+    { code: 'CT', name: 'Connecticut' },
+    { code: 'DE', name: 'Delaware' },
+    { code: 'FL', name: 'Florida' },
+    { code: 'GA', name: 'Georgia' },
+    { code: 'HI', name: 'Hawaii' },
+    { code: 'ID', name: 'Idaho' },
+    { code: 'IL', name: 'Illinois' },
+    { code: 'IN', name: 'Indiana' },
+    { code: 'IA', name: 'Iowa' },
+    { code: 'KS', name: 'Kansas' },
+    { code: 'KY', name: 'Kentucky' },
+    { code: 'LA', name: 'Louisiana' },
+    { code: 'ME', name: 'Maine' },
+    { code: 'MD', name: 'Maryland' },
+    { code: 'MA', name: 'Massachusetts' },
+    { code: 'MI', name: 'Michigan' },
+    { code: 'MN', name: 'Minnesota' },
+    { code: 'MS', name: 'Mississippi' },
+    { code: 'MO', name: 'Missouri' },
+    { code: 'MT', name: 'Montana' },
+    { code: 'NE', name: 'Nebraska' },
+    { code: 'NV', name: 'Nevada' },
+    { code: 'NH', name: 'New Hampshire' },
+    { code: 'NJ', name: 'New Jersey' },
+    { code: 'NM', name: 'New Mexico' },
+    { code: 'NY', name: 'New York' },
+    { code: 'NC', name: 'North Carolina' },
+    { code: 'ND', name: 'North Dakota' },
+    { code: 'OH', name: 'Ohio' },
+    { code: 'OK', name: 'Oklahoma' },
+    { code: 'OR', name: 'Oregon' },
+    { code: 'PA', name: 'Pennsylvania' },
+    { code: 'RI', name: 'Rhode Island' },
+    { code: 'SC', name: 'South Carolina' },
+    { code: 'SD', name: 'South Dakota' },
+    { code: 'TN', name: 'Tennessee' },
+    { code: 'TX', name: 'Texas' },
+    { code: 'UT', name: 'Utah' },
+    { code: 'VT', name: 'Vermont' },
+    { code: 'VA', name: 'Virginia' },
+    { code: 'WA', name: 'Washington' },
+    { code: 'WV', name: 'West Virginia' },
+    { code: 'WI', name: 'Wisconsin' },
+    { code: 'WY', name: 'Wyoming' }
+  ];
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +82,12 @@ export default function SignUpPage() {
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
+    if (!region) {
+      setError('Please select your state');
       setLoading(false);
       return;
     }
@@ -126,6 +187,27 @@ export default function SignUpPage() {
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                 placeholder="Confirm your password"
               />
+            </div>
+
+            <div>
+              <label htmlFor="region" className="block text-sm font-medium text-gray-700">
+                State *
+              </label>
+              <select
+                id="region"
+                name="region"
+                required
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+              >
+                <option value="">Select your state</option>
+                {usStates.map((state) => (
+                  <option key={state.code} value={state.code}>
+                    {state.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

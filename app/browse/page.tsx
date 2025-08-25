@@ -81,6 +81,13 @@ export default function BrowsePage() {
     }
   }
 
+  // Set default region filter to user's region
+  useEffect(() => {
+    if (user?.region && !filters.region) {
+      setFilters(prev => ({ ...prev, region: user.region }))
+    }
+  }, [user?.region])
+
   useEffect(() => {
     fetchContracts()
   }, [filters, pagination?.page])

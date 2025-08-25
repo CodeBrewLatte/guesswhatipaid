@@ -21,10 +21,34 @@ enum Status {
   REJECTED
 }
 
+// Predefined categories for contracts
+model Category {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+  parentId    String? // for hierarchical categories
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  contracts   Contract[]
+  
+  @@index([parentId])
+}
+
+// Predefined US states/regions
+model Region {
+  id          String @id @default(cuid())
+  code        String @unique // e.g., "CA", "NY", "TX"
+  name        String // e.g., "California", "New York", "Texas"
+  contracts   Contract[]
+  users       User[]
+}
+
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
   displayName   String?
+  regionId      String
+  region        Region   @relation(fields: [regionId], references: [id])
   plan          Plan     @default(FREE)
   hasUnlocked   Boolean  @default(false) // set true after first APPROVED upload
   createdAt     DateTime @default(now())
@@ -38,8 +62,10 @@ model Contract {
   userId        String
   user          User       @relation(fields: [userId], references: [id])
   status        Status     @default(PENDING) // PENDING, APPROVED, REJECTED
-  category      String     // e.g., Home>Flooring
-  region        String     // e.g., NJ, or "NJ-Stafford"
+  categoryId    String
+  category      Category   @relation(fields: [categoryId], references: [id])
+  regionId      String
+  region        Region     @relation(fields: [regionId], references: [id])
   vendorName    String?    // optional
   description  String?    // short summary
   priceCents   Int        // store in cents
@@ -52,7 +78,7 @@ model Contract {
   reviews      Review[]
   tags         ContractTag[]
 
-  @@index([category, region])
+  @@index([categoryId, regionId])
   @@index([status])
   @@index([priceCents])
 }

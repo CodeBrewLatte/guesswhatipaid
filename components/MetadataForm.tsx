@@ -5,12 +5,12 @@ import { useState, useEffect } from 'react'
 interface MetadataFormProps {
   onComplete: (metadata: any) => void
   onBack: () => void
+  userRegion: string // Add user's region
 }
 
 export function MetadataForm({ onComplete, onBack }: MetadataFormProps) {
   const [formData, setFormData] = useState({
     category: '',
-    region: '',
     priceCents: '',
     unit: '',
     quantity: '',
@@ -55,9 +55,6 @@ export function MetadataForm({ onComplete, onBack }: MetadataFormProps) {
 
     if (!formData.category) {
       newErrors.category = 'Category is required'
-    }
-    if (!formData.region) {
-      newErrors.region = 'Region is required'
     }
     if (!formData.priceCents) {
       newErrors.priceCents = 'Price is required'
@@ -130,25 +127,13 @@ export function MetadataForm({ onComplete, onBack }: MetadataFormProps) {
           )}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Region *
-          </label>
-          <select
-            value={formData.region}
-            onChange={(e) => handleInputChange('region', e.target.value)}
-            className={`input-field ${errors.region ? 'border-red-500' : ''}`}
-          >
-            <option value="">Select a region</option>
-            {regions.map((region) => (
-              <option key={region.name} value={region.name}>
-                {region.name} ({region.count})
-              </option>
-            ))}
-          </select>
-          {errors.region && (
-            <p className="mt-1 text-sm text-red-600">{errors.region}</p>
-          )}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-800">
+            <strong>Your Region:</strong> {userRegion}
+          </p>
+          <p className="text-xs text-blue-600 mt-1">
+            Contracts are automatically associated with your state
+          </p>
         </div>
       </div>
 

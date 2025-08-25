@@ -21,7 +21,6 @@ interface UploadData {
   redactions: RedactionBox[]
   metadata: {
     category: string
-    region: string
     priceCents: string
     unit: string
     quantity: string
@@ -41,7 +40,6 @@ export default function UploadPage() {
     redactions: [],
     metadata: {
       category: '',
-      region: '',
       priceCents: '',
       unit: '',
       quantity: '',
@@ -93,6 +91,9 @@ export default function UploadPage() {
           }
         }
       })
+
+      // Automatically add the user's region
+      formData.append('region', user?.region || '')
 
       const response = await fetch('/api/v1/contracts', {
         method: 'POST',
@@ -246,10 +247,11 @@ export default function UploadPage() {
               <p className="text-gray-600 mb-6">
                 Fill in the details about your contract to help others find and compare pricing.
               </p>
-              <MetadataForm 
-                onComplete={handleMetadataComplete}
-                onBack={() => setCurrentStep('redact')}
-              />
+                    <MetadataForm
+        onComplete={handleMetadataComplete}
+        onBack={() => setCurrentStep('redact')}
+        userRegion={user?.region || 'Unknown'}
+      />
             </div>
           )}
 
