@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../src/contexts/AuthContext';
+import { supabase } from '../../src/utils/supabase';
 import Link from 'next/link';
 
 export default function ProfilePage() {
@@ -113,6 +114,16 @@ export default function ProfilePage() {
     }
 
     try {
+      // Get the current session token from Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        setMessage('No active session. Please sign in again.');
+        setMessageType('error');
+        setLoading(false);
+        return;
+      }
+
       // Create form data for multipart upload
       const formData = new FormData();
       formData.append('displayName', displayName);
@@ -121,9 +132,12 @@ export default function ProfilePage() {
         formData.append('profileImage', profileImage);
       }
 
-      // Update user profile
+      // Update user profile with auth token
       const response = await fetch('/api/v1/users/profile', {
         method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: formData,
       });
 
@@ -138,6 +152,7 @@ export default function ProfilePage() {
         setMessageType('error');
       }
     } catch (error) {
+      console.error('Error updating profile:', error);
       setMessage('Error updating profile');
       setMessageType('error');
     } finally {
