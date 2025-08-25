@@ -17,7 +17,7 @@ const prisma = new PrismaClient();
 // Middleware
 app.use(helmet());
 app.use(cors({ 
-  origin: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000', 
+  origin: process.env.NEXT_PUBLIC_APP_URL || 'https://guesswhatipaid.vercel.app', 
   credentials: true 
 }));
 app.use(express.json({ limit: '10mb' }));
