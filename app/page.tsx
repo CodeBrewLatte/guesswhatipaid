@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '../src/contexts/AuthContext'
+import { supabase } from '../src/utils/supabase'
 import { RegionSetupModal } from '@/components/RegionSetupModal'
 
 export default function HomePage() {
@@ -11,11 +12,32 @@ export default function HomePage() {
 
   // Show region modal for new users without a region
   useEffect(() => {
-    if (user && !user.region) {
-      // Small delay to let the page load first
-      const timer = setTimeout(() => setShowRegionModal(true), 1000);
-      return () => clearTimeout(timer);
-    }
+    const checkUserRegion = async () => {
+      if (user) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            const response = await fetch('/api/v1/users/profile', {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+            if (response.ok) {
+              const profileData = await response.json();
+              if (!profileData.region) {
+                // Small delay to let the page load first
+                const timer = setTimeout(() => setShowRegionModal(true), 1000);
+                return () => clearTimeout(timer);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error checking user region:', error);
+        }
+      }
+    };
+
+    checkUserRegion();
   }, [user]);
 
   const handleRegionSet = (region: string) => {

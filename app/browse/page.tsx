@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../src/contexts/AuthContext'
+import { supabase } from '../../src/utils/supabase'
 import Link from 'next/link'
 import { FiltersBar } from '@/components/FiltersBar'
 import { StatsBar } from '@/components/StatsBar'
@@ -83,10 +84,31 @@ export default function BrowsePage() {
 
   // Set default region filter to user's region
   useEffect(() => {
-    if (user?.region && !filters.region) {
-      setFilters(prev => ({ ...prev, region: user.region }))
-    }
-  }, [user?.region])
+    const fetchUserProfile = async () => {
+      if (user && !filters.region) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            const response = await fetch('/api/v1/users/profile', {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+            if (response.ok) {
+              const profileData = await response.json();
+              if (profileData.region && !filters.region) {
+                setFilters(prev => ({ ...prev, region: profileData.region }))
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user, filters.region])
 
   useEffect(() => {
     fetchContracts()

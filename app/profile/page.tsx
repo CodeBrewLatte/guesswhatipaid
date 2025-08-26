@@ -78,10 +78,8 @@ export default function ProfilePage() {
         setDisplayName(user.displayName);
       }
       
-      // Set region if it exists
-      if (user.region) {
-        setRegion(user.region);
-      }
+      // Set region if it exists (we'll fetch this from the database)
+      // The region will be set when we fetch the profile data
       
       // Set profile image URL if it exists
       if (user.user_metadata?.avatar_url) {
