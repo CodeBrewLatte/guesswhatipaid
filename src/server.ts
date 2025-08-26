@@ -474,14 +474,23 @@ app.get('/api/v1/tags', async (req, res) => {
 app.get('/api/v1/categories', async (req, res) => {
   try {
     const categories = await prisma.contract.groupBy({
-      by: ['category'],
+      by: ['categoryId'],
       where: { status: 'APPROVED' },
-      _count: { category: true }
+      _count: { categoryId: true }
     });
 
+    // Get category names for the IDs
+    const categoryIds = categories.map(c => c.categoryId);
+    const categoryNames = await prisma.category.findMany({
+      where: { id: { in: categoryIds } },
+      select: { id: true, name: true }
+    });
+
+    const categoryMap = new Map(categoryNames.map(c => [c.id, c.name]));
+    
     res.json(categories.map(c => ({
-      name: c.category,
-      count: c._count.category
+      name: categoryMap.get(c.categoryId) || 'Unknown',
+      count: c._count.categoryId
     })));
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -492,14 +501,23 @@ app.get('/api/v1/categories', async (req, res) => {
 app.get('/api/v1/regions', async (req, res) => {
   try {
     const regions = await prisma.contract.groupBy({
-      by: ['region'],
+      by: ['regionId'],
       where: { status: 'APPROVED' },
-      _count: { region: true }
+      _count: { regionId: true }
     });
 
+    // Get region names for the IDs
+    const regionIds = regions.map(r => r.regionId);
+    const regionNames = await prisma.region.findMany({
+      where: { id: { in: regionIds } },
+      select: { id: true, name: true }
+    });
+
+    const regionMap = new Map(regionNames.map(r => [r.id, r.name]));
+    
     res.json(regions.map(r => ({
-      name: r.region,
-      count: r._count.region
+      name: regionMap.get(r.regionId) || 'Unknown',
+      count: r._count.regionId
     })));
   } catch (error) {
     console.error('Error fetching regions:', error);
