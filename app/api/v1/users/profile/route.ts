@@ -264,13 +264,16 @@ export async function PUT(request: NextRequest) {
       update: {
         displayName: displayName || null,
         region: region,
-        profileImageUrl: profileImageUrl || null
+        profileImageUrl: profileImageUrl || null,
+        updatedAt: new Date()
       },
       create: {
         email: user.email,
         displayName: displayName || null,
         region: region,
-        profileImageUrl: profileImageUrl || null
+        profileImageUrl: profileImageUrl || null,
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     });
 
@@ -286,6 +289,11 @@ export async function PUT(request: NextRequest) {
 
   } catch (error) {
     console.error('Error in profile update:', error);
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
