@@ -3,9 +3,10 @@ import { createServerSupabaseClient } from '../../../../../src/utils/supabase';
 import { PrismaClient } from '@prisma/client';
 
 export async function PUT(request: NextRequest) {
+  const prisma = new PrismaClient();
+  
   try {
     const supabase = createServerSupabaseClient();
-    const prisma = new PrismaClient();
     
     // Get the user from the request
     const authHeader = request.headers.get('authorization');
