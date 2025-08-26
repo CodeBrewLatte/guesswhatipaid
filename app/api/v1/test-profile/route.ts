@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       prismaStatus = 'PrismaClient imported successfully';
       console.log('PrismaClient import successful');
     } catch (prismaError) {
-      prismaStatus = `PrismaClient import failed: ${prismaError.message}`;
+      prismaStatus = `PrismaClient import failed: ${prismaError instanceof Error ? prismaError.message : 'Unknown error'}`;
       console.error('PrismaClient import failed:', prismaError);
     }
     
@@ -41,11 +41,11 @@ export async function GET(request: NextRequest) {
         await prisma.$disconnect();
         clientStatus += ' and disconnected';
       } catch (connectError) {
-        clientStatus += ` but connection failed: ${connectError.message}`;
+        clientStatus += ` but connection failed: ${connectError instanceof Error ? connectError.message : 'Unknown error'}`;
       }
       
     } catch (clientError) {
-      clientStatus = `PrismaClient creation failed: ${clientError.message}`;
+      clientStatus = `PrismaClient creation failed: ${clientError instanceof Error ? clientError.message : 'Unknown error'}`;
       console.error('PrismaClient creation failed:', clientError);
     }
     
