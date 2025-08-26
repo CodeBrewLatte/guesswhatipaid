@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../../src/contexts/AuthContext'
+import { supabase } from '../../src/utils/supabase'
 import Link from 'next/link'
 import { UploadDropzone } from '@/components/UploadDropzone'
 import { RedactionCanvas } from '@/components/RedactionCanvas'
@@ -35,6 +36,7 @@ export default function UploadPage() {
   const { user, signOut } = useAuth()
   const isSignedIn = !!user
   const [currentStep, setCurrentStep] = useState<UploadStep>('upload')
+  const [userRegion, setUserRegion] = useState<string>('Not Set')
   const [uploadData, setUploadData] = useState<UploadData>({
     file: null,
     redactions: [],
@@ -51,6 +53,32 @@ export default function UploadPage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  // Fetch user's region when component mounts
+  useEffect(() => {
+    const fetchUserRegion = async () => {
+      if (user) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            const profileResponse = await fetch('/api/v1/users/profile', {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json();
+              setUserRegion(profileData.region || 'Not Set');
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user region:', error);
+        }
+      }
+    };
+
+    fetchUserRegion();
+  }, [user]);
 
   const handleFileUpload = (file: File) => {
     setUploadData(prev => ({ ...prev, file }))
@@ -93,7 +121,27 @@ export default function UploadPage() {
       })
 
       // Automatically add the user's region
-      formData.append('region', user?.region || '')
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          const profileResponse = await fetch('/api/v1/users/profile', {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+          });
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            formData.append('region', profileData.region || '');
+          } else {
+            formData.append('region', '');
+          }
+        } else {
+          formData.append('region', '');
+        }
+      } catch (error) {
+        console.error('Error fetching user region:', error);
+        formData.append('region', '');
+      }
 
       const response = await fetch('/api/v1/contracts', {
         method: 'POST',
@@ -275,7 +323,7 @@ export default function UploadPage() {
                     <MetadataForm
         onComplete={handleMetadataComplete}
         onBack={() => setCurrentStep('redact')}
-        userRegion={user?.region || 'Not Set'}
+        userRegion={userRegion}
       />
             </div>
           )}
@@ -300,7 +348,7 @@ export default function UploadPage() {
                       <span className="font-medium">Category:</span> {uploadData.metadata.category}
                     </div>
                     <div>
-                      <span className="font-medium">Region:</span> {uploadData.metadata.region}
+                      <span className="font-medium">Region:</span> {userRegion}
                     </div>
                     <div>
                       <span className="font-medium">Price:</span> ${uploadData.metadata.priceCents}
