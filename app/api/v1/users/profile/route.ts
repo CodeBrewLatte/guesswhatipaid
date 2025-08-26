@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '../../../../../src/utils/supabase';
+import { PrismaClient } from '@prisma/client';
 
 export async function PUT(request: NextRequest) {
   try {
     const supabase = createServerSupabaseClient();
+    const prisma = new PrismaClient();
     
     // Get the user from the request
     const authHeader = request.headers.get('authorization');
@@ -91,33 +93,36 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Update user data
-    const updateData: any = { 
-      region: region,
-      displayName: displayName || null
-    };
+    // Look up region by name/code
+    const regionRecord = await prisma.region.findFirst({
+      where: { 
+        OR: [
+          { name: region },
+          { code: region }
+        ]
+      }
+    });
 
-    if (avatarUrl) {
-      updateData.avatarUrl = avatarUrl;
-    }
-
-    const { error: updateError } = await supabase
-      .from('User')
-      .update(updateData)
-      .eq('id', user.id);
-
-    if (updateError) {
-      console.error('Error updating user profile:', updateError);
+    if (!regionRecord) {
       return NextResponse.json(
-        { error: 'Failed to update profile' },
-        { status: 500 }
+        { error: 'Invalid region' },
+        { status: 400 }
       );
     }
+
+    // Update user data in Prisma database
+    const updatedUser = await prisma.user.update({
+      where: { email: user.email },
+      data: { 
+        regionId: regionRecord.id,
+        displayName: displayName || null
+      }
+    });
 
     return NextResponse.json({ 
       success: true, 
       message: 'Profile updated successfully',
-      region: region,
+      region: regionRecord.name,
       displayName: displayName,
       avatarUrl: avatarUrl
     });
@@ -128,5 +133,7 @@ export async function PUT(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
