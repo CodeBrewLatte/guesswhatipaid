@@ -22,6 +22,7 @@ interface Contract {
   pricePerUnit?: string
   user: {
     displayName?: string
+    email?: string
   }
   tags: Array<{ label: string }>
   reviews: Array<{
@@ -30,6 +31,7 @@ interface Contract {
     comment?: string
     user: {
       displayName?: string
+      email?: string
     }
     createdAt: string
   }>
