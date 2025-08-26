@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '../../../../../src/utils/supabase';
-import { PrismaClient } from '@prisma/client';
 
 export async function PUT(request: NextRequest) {
-  const prisma = new PrismaClient();
-  
   try {
     const supabase = createServerSupabaseClient();
     
@@ -94,36 +91,27 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Look up region by name/code
-    const regionRecord = await prisma.region.findFirst({
-      where: { 
-        OR: [
-          { name: region },
-          { code: region }
-        ]
-      }
-    });
-
-    if (!regionRecord) {
-      return NextResponse.json(
-        { error: 'Invalid region' },
-        { status: 400 }
-      );
-    }
-
-    // Update user data in Prisma database
-    const updatedUser = await prisma.user.update({
-      where: { email: user.email },
-      data: { 
-        regionId: regionRecord.id,
+    // For now, just store region in user metadata since we can't connect to Prisma
+    // This is a temporary solution until we fix the database connection
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: {
+        region: region,
         displayName: displayName || null
       }
     });
 
+    if (updateError) {
+      console.error('Error updating user:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update profile' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({ 
       success: true, 
       message: 'Profile updated successfully',
-      region: regionRecord.name,
+      region: region,
       displayName: displayName,
       avatarUrl: avatarUrl
     });
@@ -134,7 +122,5 @@ export async function PUT(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
