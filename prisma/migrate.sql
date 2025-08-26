@@ -1,5 +1,20 @@
 -- Migration script to add missing fields to match frontend code expectations
 
+-- Create UserProfile table if it doesn't exist
+CREATE TABLE IF NOT EXISTS "UserProfile" (
+  "id" TEXT NOT NULL,
+  "email" TEXT NOT NULL,
+  "displayName" TEXT,
+  "region" TEXT,
+  "profileImageUrl" TEXT,
+  "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
+  CONSTRAINT "UserProfile_pkey" PRIMARY KEY ("id")
+);
+
+-- Create unique index on email
+CREATE UNIQUE INDEX IF NOT EXISTS "UserProfile_email_key" ON "UserProfile"("email");
+
 -- Add missing fields to Contract table
 ALTER TABLE "Contract" 
 ADD COLUMN IF NOT EXISTS "priceCents" INTEGER,
