@@ -320,23 +320,61 @@ export async function PUT(request: NextRequest) {
       profileImageUrl: profileImageUrl || null
     });
     
-    const userProfile = await prisma.userProfile.upsert({
-      where: { email: user.email },
-      update: {
-        displayName: displayName || null,
-        region: region,
-        profileImageUrl: profileImageUrl || null,
-        updatedAt: new Date()
-      },
-      create: {
-        email: user.email,
-        displayName: displayName || null,
-        region: region,
-        profileImageUrl: profileImageUrl || null,
-        createdAt: new Date(),
-        updatedAt: new Date()
+    let userProfile;
+    try {
+      userProfile = await prisma.userProfile.upsert({
+        where: { email: user.email },
+        update: {
+          displayName: displayName || null,
+          region: region,
+          profileImageUrl: profileImageUrl || null,
+          updatedAt: new Date()
+        },
+        create: {
+          email: user.email,
+          displayName: displayName || null,
+          region: region,
+          profileImageUrl: profileImageUrl || null,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
+    } catch (upsertError) {
+      console.error('Upsert operation failed:', upsertError);
+      
+      // Try a simpler approach - just update if exists, create if not
+      try {
+        const existingProfile = await prisma.userProfile.findUnique({
+          where: { email: user.email }
+        });
+        
+        if (existingProfile) {
+          userProfile = await prisma.userProfile.update({
+            where: { email: user.email },
+            data: {
+              displayName: displayName || null,
+              region: region,
+              profileImageUrl: profileImageUrl || null,
+              updatedAt: new Date()
+            }
+          });
+        } else {
+          userProfile = await prisma.userProfile.create({
+            data: {
+              email: user.email,
+              displayName: displayName || null,
+              region: region,
+              profileImageUrl: profileImageUrl || null,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }
+          });
+        }
+      } catch (fallbackError) {
+        console.error('Fallback operation also failed:', fallbackError);
+        throw fallbackError;
       }
-    });
+    }
 
     console.log('Profile upsert result:', userProfile);
 
