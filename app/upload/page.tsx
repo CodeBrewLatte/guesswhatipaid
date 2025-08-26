@@ -167,7 +167,6 @@ export default function UploadPage() {
       redactions: [],
       metadata: {
         category: '',
-        region: '',
         priceCents: '',
         unit: '',
         quantity: '',
