@@ -1,4 +1,4 @@
-# You Paid What - Crowdsourced Pricing Transparency 🚀
+# You Paid What - Crowdsourced Pricing Transparency 🚀✨
 
 A modern web application that provides crowdsourced pricing transparency for real-world projects. Users can upload contracts, quotes, and invoices to help others understand fair market prices for various services.
 
