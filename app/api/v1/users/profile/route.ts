@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '../../../../../src/utils/supabase';
+import { PrismaClient } from '@prisma/client';
 
 export async function PUT(request: NextRequest) {
+  const prisma = new PrismaClient();
+  
   try {
     const supabase = createServerSupabaseClient();
     
@@ -91,22 +94,21 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // For now, just store region in user metadata since we can't connect to Prisma
-    // This is a temporary solution until we fix the database connection
-    const { error: updateError } = await supabase.auth.updateUser({
-      data: {
+    // Update or create user profile in our simplified database
+    const userProfile = await prisma.userProfile.upsert({
+      where: { email: user.email },
+      update: {
+        displayName: displayName || null,
         region: region,
-        displayName: displayName || null
+        avatarUrl: avatarUrl || null
+      },
+      create: {
+        email: user.email,
+        displayName: displayName || null,
+        region: region,
+        avatarUrl: avatarUrl || null
       }
     });
-
-    if (updateError) {
-      console.error('Error updating user:', updateError);
-      return NextResponse.json(
-        { error: 'Failed to update profile' },
-        { status: 500 }
-      );
-    }
 
     return NextResponse.json({ 
       success: true, 
@@ -122,5 +124,7 @@ export async function PUT(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }

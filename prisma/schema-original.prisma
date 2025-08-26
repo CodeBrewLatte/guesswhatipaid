@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Predefined categories for contracts
+model Category {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+  parentId    String? // for hierarchical categories
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  contracts   Contract[]
+  
+  @@index([parentId])
+}
+
+// Predefined US states/regions
+model Region {
+  id          String @id @default(cuid())
+  code        String @unique // e.g., "CA", "NY", "TX"
+  name        String // e.g., "California", "New York", "Texas"
+  contracts   Contract[]
+  users       User[]
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  displayName   String?
+  regionId      String
+  region        Region   @relation(fields: [regionId], references: [id])
+  plan          Plan     @default(FREE)
+  hasUnlocked   Boolean  @default(false) // set true after first APPROVED upload
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  contracts     Contract[]
+  reviews       Review[]
+}
+
+model Contract {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  status        Status     @default(PENDING) // PENDING, APPROVED, REJECTED
+  categoryId    String
+  category      Category   @relation(fields: [categoryId], references: [id])
+  regionId      String
+  region        Region     @relation(fields: [regionId], references: [id])
+  vendorName    String?    // optional
+  description  String?    // short summary
+  priceCents   Int        // store in cents
+  unit          String?    // e.g., "sqft", "hour", "flat"
+  quantity     Float?     // e.g., 800 sqft
+  fileKey      String     // S3 key
+  thumbKey     String?    // S3 thumbnail for previews
+  takenOn      DateTime?  // contract date
+  createdAt    DateTime   @default(now())
+  reviews      Review[]
+  tags         ContractTag[]
+
+  @@index([categoryId, regionId])
+  @@index([status])
+  @@index([priceCents])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  rating     Int      // -1 or +1
+  comment    String?
+  createdAt  DateTime @default(now())
+  
+  @@unique([contractId, userId]) // one vote per user per contract
+  @@index([contractId])
+  @@index([userId])
+}
+
+model ContractTag {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+  label      String
+  
+  @@index([label])
+  @@index([contractId])
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  eventType String   // e.g., upload_started, search_performed
+  userId    String?
+  metadata  Json?    // additional event data
+  createdAt DateTime @default(now())
+  
+  @@index([eventType])
+  @@index([userId])
+  @@index([createdAt])
+}
