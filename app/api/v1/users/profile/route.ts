@@ -6,6 +6,21 @@ export async function GET(request: NextRequest) {
   const prisma = new PrismaClient();
   
   try {
+    // Check environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing environment variables:', { 
+        supabaseUrl: !!supabaseUrl, 
+        supabaseAnonKey: !!supabaseAnonKey 
+      });
+      return NextResponse.json(
+        { error: 'Configuration error' },
+        { status: 500 }
+      );
+    }
+    
     // Get the user from the request
     const authHeader = request.headers.get('authorization');
     
@@ -19,8 +34,6 @@ export async function GET(request: NextRequest) {
     const token = authHeader.substring(7);
     
     // Create a Supabase client with the user's access token
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: false,
@@ -32,6 +45,7 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
+      console.error('Auth error:', authError);
       return NextResponse.json(
         { error: 'Invalid token' },
         { status: 401 }
@@ -46,6 +60,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Test database connection first
+    try {
+      await prisma.$connect();
+    } catch (dbError) {
+      console.error('Database connection error:', dbError);
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 500 }
+      );
+    }
+    
     // Get user profile from database
     const userProfile = await prisma.userProfile.findUnique({
       where: { email: user.email },
@@ -89,9 +114,22 @@ export async function PUT(request: NextRequest) {
   const prisma = new PrismaClient();
   
   try {
+    // Check environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing environment variables:', { 
+        supabaseUrl: !!supabaseUrl, 
+        supabaseAnonKey: !!supabaseAnonKey 
+      });
+      return NextResponse.json(
+        { error: 'Configuration error' },
+        { status: 500 }
+      );
+    }
+    
     // Create a Supabase client with the user's access token
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         autoRefreshToken: false,
