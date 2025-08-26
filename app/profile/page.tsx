@@ -93,8 +93,8 @@ export default function ProfilePage() {
                 setRegion(profileData.region);
               }
               
-              if (profileData.avatarUrl) {
-                setProfileImageUrl(profileData.avatarUrl);
+              if (profileData.profileImageUrl) {
+                setProfileImageUrl(profileData.profileImageUrl);
               } else if (user.user_metadata?.avatar_url) {
                 setProfileImageUrl(user.user_metadata.avatar_url);
               }
