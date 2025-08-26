@@ -92,10 +92,7 @@ app.get('/api/v1/contracts', async (req, res) => {
           description: true,
           vendorName: true,
           takenOn: true,
-          createdAt: true,
-          _count: {
-            select: { reviews: true }
-          }
+          createdAt: true
         }
       }),
       prisma.contract.count({ where }),
@@ -135,32 +132,30 @@ app.get('/api/v1/contracts', async (req, res) => {
     console.error('Error fetching contracts:', error);
     
     // Return mock data when database fails
-    const mockItems = [
-      {
-        id: 'mock-1',
-        category: 'Home & Garden',
-        region: 'CA',
-        priceCents: 250000,
-        unit: 'sqft',
-        quantity: 1000,
-        description: 'Kitchen renovation with granite countertops',
-        vendorName: 'Home Renovation Co',
-        createdAt: new Date().toISOString(),
-        _count: { reviews: 5 }
-      },
-      {
-        id: 'mock-2',
-        category: 'Auto & Transport',
-        region: 'NY',
-        priceCents: 1500000,
-        unit: 'flat',
-        quantity: 1,
-        description: 'Complete car detailing and paint correction',
-        vendorName: 'Premium Auto Care',
-        createdAt: new Date().toISOString(),
-        _count: { reviews: 3 }
-      }
-    ];
+          const mockItems = [
+        {
+          id: 'mock-1',
+          category: 'Home & Garden',
+          region: 'CA',
+          priceCents: 250000,
+          unit: 'sqft',
+          quantity: 1000,
+          description: 'Kitchen renovation with granite countertops',
+          vendorName: 'Home Renovation Co',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 'mock-2',
+          category: 'Auto & Transport',
+          region: 'NY',
+          priceCents: 1500000,
+          unit: 'flat',
+          quantity: 1,
+          description: 'Complete car detailing and paint correction',
+          vendorName: 'Premium Auto Care',
+          createdAt: new Date().toISOString()
+        }
+      ];
 
     const mockStats = {
       avg: 875,
@@ -193,14 +188,7 @@ app.get('/api/v1/contracts/:id', async (req, res) => {
     const locked = !user?.hasUnlocked;
 
     const contract = await prisma.contract.findUnique({
-      where: { id },
-      include: {
-        user: { select: { displayName: true } },
-        tags: true,
-        reviews: {
-          include: { user: { select: { displayName: true } } }
-        }
-      }
+      where: { id }
     });
 
     if (!contract) {
@@ -269,34 +257,13 @@ app.post('/api/v1/contracts', authMiddleware, async (req, res) => {
     // Process file with redactions
     const { redactedFileKey, thumbnailKey } = await applyRedaction(file, redactions);
 
-    // Look up category and region by name/code
-    const categoryRecord = await prisma.category.findFirst({
-      where: { name: sanitizeInput(category) }
-    });
-    
-    const regionRecord = await prisma.region.findFirst({
-      where: { 
-        OR: [
-          { name: sanitizeInput(region) },
-          { code: sanitizeInput(region) }
-        ]
-      }
-    });
-
-    if (!categoryRecord) {
-      return res.status(400).json({ error: 'Invalid category' });
-    }
-
-    if (!regionRecord) {
-      return res.status(400).json({ error: 'Invalid region' });
-    }
-
-    // Create contract
+    // Create contract with simplified schema
     const contract = await prisma.contract.create({
       data: {
         userId: user.id,
-        categoryId: categoryRecord.id,
-        regionId: regionRecord.id,
+        email: user.email,
+        category: sanitizeInput(category),
+        region: sanitizeInput(region),
         priceCents: Number(priceCents),
         unit: unit ? sanitizeInput(unit) : null,
         quantity: quantity ? Number(quantity) : null,
@@ -305,20 +272,7 @@ app.post('/api/v1/contracts', authMiddleware, async (req, res) => {
         fileKey: redactedFileKey,
         thumbKey: thumbnailKey,
         takenOn: takenOn ? new Date(takenOn) : null,
-        status: 'PENDING',
-        tags: tags ? { 
-          create: (Array.isArray(tags) ? tags : [tags])
-            .map((t: string) => ({ label: sanitizeInput(t) })) 
-        } : undefined
-      }
-    });
-
-    // Track event
-    await prisma.event.create({
-      data: {
-        eventType: 'upload_submitted',
-        userId: user.id,
-        metadata: { contractId: contract.id, category: categoryRecord.name, region: regionRecord.name }
+        status: 'PENDING'
       }
     });
 
@@ -357,19 +311,13 @@ app.patch('/api/v1/contracts/:id/review', authMiddleware, async (req, res) => {
       create: { 
         contractId: id, 
         userId: user.id, 
+        email: user.email,
         rating, 
         comment: sanitizedComment 
       }
     });
 
-    // Track event
-    await prisma.event.create({
-      data: {
-        eventType: 'vote_cast',
-        userId: user.id,
-        metadata: { contractId: id, rating }
-      }
-    });
+    // Note: Event tracking removed in simplified schema
 
     res.json(upsert);
   } catch (error) {
@@ -385,10 +333,6 @@ app.get('/api/v1/admin/contracts', adminMiddleware, async (req, res) => {
     
     const contracts = await prisma.contract.findMany({
       where: { status: status as any },
-      include: {
-        user: { select: { email: true, displayName: true } },
-        tags: true
-      },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -422,21 +366,8 @@ app.post('/api/v1/admin/contracts/:id/status', adminMiddleware, async (req, res)
         } 
       });
       
-      if (userUploads >= 1) {
-        await prisma.user.update({ 
-          where: { id: updated.userId }, 
-          data: { hasUnlocked: true } 
-        });
-
-        // Track unlock event
-        await prisma.event.create({
-          data: {
-            eventType: 'unlocked',
-            userId: updated.userId,
-            metadata: { contractId: id }
-          }
-        });
-      }
+      // Note: User unlock tracking removed in simplified schema
+      // Users are unlocked by default in the simplified version
     }
 
     res.json(updated);
@@ -474,23 +405,14 @@ app.get('/api/v1/tags', async (req, res) => {
 app.get('/api/v1/categories', async (req, res) => {
   try {
     const categories = await prisma.contract.groupBy({
-      by: ['categoryId'],
+      by: ['category'],
       where: { status: 'APPROVED' },
-      _count: { categoryId: true }
+      _count: { category: true }
     });
-
-    // Get category names for the IDs
-    const categoryIds = categories.map(c => c.categoryId);
-    const categoryNames = await prisma.category.findMany({
-      where: { id: { in: categoryIds } },
-      select: { id: true, name: true }
-    });
-
-    const categoryMap = new Map(categoryNames.map(c => [c.id, c.name]));
     
     res.json(categories.map(c => ({
-      name: categoryMap.get(c.categoryId) || 'Unknown',
-      count: c._count.categoryId
+      name: c.category,
+      count: c._count.category
     })));
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -501,23 +423,14 @@ app.get('/api/v1/categories', async (req, res) => {
 app.get('/api/v1/regions', async (req, res) => {
   try {
     const regions = await prisma.contract.groupBy({
-      by: ['regionId'],
+      by: ['region'],
       where: { status: 'APPROVED' },
-      _count: { regionId: true }
+      _count: { region: true }
     });
-
-    // Get region names for the IDs
-    const regionIds = regions.map(r => r.regionId);
-    const regionNames = await prisma.region.findMany({
-      where: { id: { in: regionIds } },
-      select: { id: true, name: true }
-    });
-
-    const regionMap = new Map(regionNames.map(r => [r.id, r.name]));
     
     res.json(regions.map(r => ({
-      name: regionMap.get(r.regionId) || 'Unknown',
-      count: r._count.regionId
+      name: r.region,
+      count: r._count.region
     })));
   } catch (error) {
     console.error('Error fetching regions:', error);

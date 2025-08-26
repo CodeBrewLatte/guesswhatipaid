@@ -30,6 +30,14 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Ensure user has an email
+    if (!user.email) {
+      return NextResponse.json(
+        { error: 'User email not found' },
+        { status: 400 }
+      );
+    }
+
     // Parse request data - handle both JSON and multipart form data
     let displayName: string | null = null;
     let region: string | null = null;
