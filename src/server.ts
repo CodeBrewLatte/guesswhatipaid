@@ -269,12 +269,34 @@ app.post('/api/v1/contracts', authMiddleware, async (req, res) => {
     // Process file with redactions
     const { redactedFileKey, thumbnailKey } = await applyRedaction(file, redactions);
 
+    // Look up category and region by name/code
+    const categoryRecord = await prisma.category.findFirst({
+      where: { name: sanitizeInput(category) }
+    });
+    
+    const regionRecord = await prisma.region.findFirst({
+      where: { 
+        OR: [
+          { name: sanitizeInput(region) },
+          { code: sanitizeInput(region) }
+        ]
+      }
+    });
+
+    if (!categoryRecord) {
+      return res.status(400).json({ error: 'Invalid category' });
+    }
+
+    if (!regionRecord) {
+      return res.status(400).json({ error: 'Invalid region' });
+    }
+
     // Create contract
     const contract = await prisma.contract.create({
       data: {
         userId: user.id,
-        category: sanitizeInput(category),
-        region: sanitizeInput(region),
+        categoryId: categoryRecord.id,
+        regionId: regionRecord.id,
         priceCents: Number(priceCents),
         unit: unit ? sanitizeInput(unit) : null,
         quantity: quantity ? Number(quantity) : null,
@@ -296,7 +318,7 @@ app.post('/api/v1/contracts', authMiddleware, async (req, res) => {
       data: {
         eventType: 'upload_submitted',
         userId: user.id,
-        metadata: { contractId: contract.id, category, region }
+        metadata: { contractId: contract.id, category: categoryRecord.name, region: regionRecord.name }
       }
     });
 
