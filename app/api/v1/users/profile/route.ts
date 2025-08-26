@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { PrismaClient } from '@prisma/client';
 
 // Force dynamic rendering since we use request headers
 export const dynamic = 'force-dynamic';
 
+// Create a singleton Prisma client to prevent connection issues
+let prisma: any = null;
+
+function getPrismaClient() {
+  if (!prisma) {
+    const { PrismaClient } = require('@prisma/client');
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
+
 export async function GET(request: NextRequest) {
-  const prisma = new PrismaClient();
+  const prisma = getPrismaClient();
   
   try {
     console.log('Profile GET request started');
@@ -77,18 +87,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Test database connection first
-    try {
-      await prisma.$connect();
-    } catch (dbError) {
-      console.error('Database connection error:', dbError);
-      return NextResponse.json(
-        { error: 'Database connection failed' },
-        { status: 500 }
-      );
-    }
-    
     // Get user profile from database
+    console.log('Attempting to fetch profile for email:', user.email);
+    
     const userProfile = await prisma.userProfile.findUnique({
       where: { email: user.email },
       select: {
@@ -102,7 +103,10 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    console.log('Database query result:', userProfile);
+
     if (!userProfile) {
+      console.log('No profile found, returning default profile');
       // Return default profile if none exists
       return NextResponse.json({
         id: user.id,
@@ -115,6 +119,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    console.log('Returning existing profile:', userProfile);
     return NextResponse.json(userProfile);
   } catch (error) {
     console.error('Error fetching profile:', error);
@@ -122,13 +127,11 @@ export async function GET(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
 export async function PUT(request: NextRequest) {
-  const prisma = new PrismaClient();
+  const prisma = getPrismaClient();
   
   try {
     // Check environment variables
@@ -287,7 +290,5 @@ export async function PUT(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

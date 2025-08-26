@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
+// Create a singleton Prisma client to prevent connection issues
+let prisma: any = null;
+
+function getPrismaClient() {
+  if (!prisma) {
+    const { PrismaClient } = require('@prisma/client');
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
+
 export async function GET(request: NextRequest) {
-  const prisma = new PrismaClient();
+  const prisma = getPrismaClient();
   
   try {
     console.log('Debug profile endpoint - testing database connection...');
@@ -18,25 +28,12 @@ export async function GET(request: NextRequest) {
     
     console.log('Environment variables:', envVars);
     
-    // Test 2: Test database connection
-    try {
-      await prisma.$connect();
-      console.log('Database connection successful');
-    } catch (dbError) {
-      console.error('Database connection failed:', dbError);
-      return NextResponse.json({
-        error: 'Database connection failed',
-        details: dbError instanceof Error ? dbError.message : 'Unknown error',
-        envVars
-      }, { status: 500 });
-    }
-    
-    // Test 3: Test basic database query
+    // Test 2: Test basic database query
     try {
       const userCount = await prisma.userProfile.count();
       console.log('User count query successful:', userCount);
       
-      // Test 4: Test schema fields
+      // Test 3: Test schema fields
       const sampleUser = await prisma.userProfile.findFirst({
         select: {
           id: true,
@@ -77,7 +74,5 @@ export async function GET(request: NextRequest) {
       error: 'Unexpected error',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
