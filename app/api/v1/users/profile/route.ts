@@ -219,11 +219,53 @@ export async function PUT(request: NextRequest) {
     let profileImageUrl = null;
     if (profileImage) {
       try {
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        const fileType = profileImage.type;
+        
+        if (!allowedTypes.includes(fileType)) {
+          console.error('Invalid file type:', fileType);
+          return NextResponse.json(
+            { error: 'Invalid file type. Only JPEG, PNG, and WebP images are allowed.' },
+            { status: 400 }
+          );
+        }
+        
+        // Validate file size (5MB limit)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (profileImage.size > maxSize) {
+          console.error('File too large:', profileImage.size);
+          return NextResponse.json(
+            { error: 'File too large. Maximum size is 5MB.' },
+            { status: 400 }
+          );
+        }
+        
+        // Validate file extension
+        const fileName = profileImage.name.toLowerCase();
+        const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+        const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+        
+        if (!allowedExtensions.includes(fileExtension)) {
+          console.error('Invalid file extension:', fileExtension);
+          return NextResponse.json(
+            { error: 'Invalid file extension. Only .jpg, .jpeg, .png, and .webp files are allowed.' },
+            { status: 400 }
+          );
+        }
+        
+        console.log('Image validation passed:', {
+          type: fileType,
+          size: profileImage.size,
+          extension: fileExtension,
+          name: profileImage.name
+        });
+        
         // Upload image to Supabase Storage
-        const fileName = `profile-${user.id}-${Date.now()}.${profileImage.name.split('.').pop()}`;
+        const safeFileName = `profile-${user.id}-${Date.now()}${fileExtension}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(fileName, profileImage, {
+          .upload(safeFileName, profileImage, {
             cacheControl: '3600',
             upsert: false
           });
@@ -239,9 +281,11 @@ export async function PUT(request: NextRequest) {
         // Get public URL
         const { data: urlData } = supabase.storage
           .from('avatars')
-          .getPublicUrl(fileName);
+          .getPublicUrl(safeFileName);
         
         profileImageUrl = urlData.publicUrl;
+        console.log('Image upload successful:', profileImageUrl);
+        
       } catch (uploadError) {
         console.error('Error handling image upload:', uploadError);
         return NextResponse.json(

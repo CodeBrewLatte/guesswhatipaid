@@ -119,7 +119,40 @@ export default function ProfilePage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        setMessage('Invalid file type. Only JPEG, PNG, and WebP images are allowed.');
+        setMessageType('error');
+        e.target.value = ''; // Clear the input
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        setMessage('File too large. Maximum size is 5MB.');
+        setMessageType('error');
+        e.target.value = ''; // Clear the input
+        return;
+      }
+      
+      // Validate file extension
+      const fileName = file.name.toLowerCase();
+      const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+      const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+      
+      if (!allowedExtensions.includes(fileExtension)) {
+        setMessage('Invalid file extension. Only .jpg, .jpeg, .png, and .webp files are allowed.');
+        setMessageType('error');
+        e.target.value = ''; // Clear the input
+        return;
+      }
+      
+      // All validations passed
       setProfileImage(file);
+      setMessage(''); // Clear any previous error messages
+      
       // Create preview URL
       const url = URL.createObjectURL(file);
       setProfileImageUrl(url);
@@ -259,6 +292,9 @@ export default function ProfilePage() {
               </div>
               <p className="mt-2 text-sm text-gray-500">
                 Click the camera icon to upload a profile picture
+              </p>
+              <p className="mt-1 text-xs text-gray-400">
+                Supported formats: JPEG, PNG, WebP • Max size: 5MB
               </p>
             </div>
 
