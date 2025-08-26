@@ -70,20 +70,50 @@ export default function ProfilePage() {
   ];
 
   useEffect(() => {
-    if (user) {
-      // Set display name (from Google SSO or existing data)
-      if (user.user_metadata?.full_name) {
-        setDisplayName(user.user_metadata.full_name);
+    const fetchProfile = async () => {
+      if (user) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            const response = await fetch('/api/v1/users/profile', {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+            
+            if (response.ok) {
+              const profileData = await response.json();
+              if (profileData.displayName) {
+                setDisplayName(profileData.displayName);
+              } else if (user.user_metadata?.full_name) {
+                setDisplayName(user.user_metadata.full_name);
+              }
+              
+              if (profileData.region) {
+                setRegion(profileData.region);
+              }
+              
+              if (profileData.avatarUrl) {
+                setProfileImageUrl(profileData.avatarUrl);
+              } else if (user.user_metadata?.avatar_url) {
+                setProfileImageUrl(user.user_metadata.avatar_url);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          // Fallback to user metadata if API call fails
+          if (user.user_metadata?.full_name) {
+            setDisplayName(user.user_metadata.full_name);
+          }
+          if (user.user_metadata?.avatar_url) {
+            setProfileImageUrl(user.user_metadata.avatar_url);
+          }
+        }
       }
-      
-      // Set region if it exists (we'll fetch this from the database)
-      // The region will be set when we fetch the profile data
-      
-      // Set profile image URL if it exists
-      if (user.user_metadata?.avatar_url) {
-        setProfileImageUrl(user.user_metadata.avatar_url);
-      }
-    }
+    };
+
+    fetchProfile();
   }, [user]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -2,6 +2,81 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '../../../../../src/utils/supabase';
 import { PrismaClient } from '@prisma/client';
 
+export async function GET(request: NextRequest) {
+  const prisma = new PrismaClient();
+  
+  try {
+    const supabase = createServerSupabaseClient();
+    
+    // Get the user from the request
+    const authHeader = request.headers.get('authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    
+    // Verify the token and get user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    // Ensure user has an email
+    if (!user.email) {
+      return NextResponse.json(
+        { error: 'User email not found' },
+        { status: 400 }
+      );
+    }
+
+    // Get user profile from database
+    const userProfile = await prisma.userProfile.findUnique({
+      where: { email: user.email },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        region: true,
+        avatarUrl: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    if (!userProfile) {
+      // Return default profile if none exists
+      return NextResponse.json({
+        id: user.id,
+        email: user.email,
+        displayName: user.user_metadata?.full_name || null,
+        region: null,
+        avatarUrl: user.user_metadata?.avatar_url || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    }
+
+    return NextResponse.json(userProfile);
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 export async function PUT(request: NextRequest) {
   const prisma = new PrismaClient();
   
