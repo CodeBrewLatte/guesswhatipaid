@@ -6,9 +6,16 @@ export async function GET(request: NextRequest) {
   const prisma = new PrismaClient();
   
   try {
+    console.log('Profile GET request started');
+    
     // Check environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    console.log('Environment variables check:', { 
+      supabaseUrl: !!supabaseUrl, 
+      supabaseAnonKey: !!supabaseAnonKey 
+    });
     
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error('Missing environment variables:', { 
@@ -23,8 +30,10 @@ export async function GET(request: NextRequest) {
     
     // Get the user from the request
     const authHeader = request.headers.get('authorization');
+    console.log('Auth header present:', !!authHeader);
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('Invalid auth header format');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -32,6 +41,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
+    console.log('Token extracted, length:', token.length);
     
     // Create a Supabase client with the user's access token
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -40,6 +50,8 @@ export async function GET(request: NextRequest) {
         persistSession: false
       }
     });
+    
+    console.log('Supabase client created, attempting to get user...');
     
     // Set the user's access token
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -52,6 +64,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log('User authenticated successfully, email:', user.email);
+    
     // Ensure user has an email
     if (!user.email) {
       return NextResponse.json(
