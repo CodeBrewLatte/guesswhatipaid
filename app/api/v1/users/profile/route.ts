@@ -30,6 +30,9 @@ export async function GET(request: NextRequest) {
   try {
     console.log('Profile GET request started');
     
+    // Explicitly connect to ensure clean connection
+    await prisma.$connect();
+    
     // Check environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -136,6 +139,9 @@ export async function GET(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    // Explicitly disconnect to ensure clean connection
+    await prisma.$disconnect();
   }
 }
 
@@ -143,6 +149,8 @@ export async function PUT(request: NextRequest) {
   const prisma = getPrismaClient();
   
   try {
+    // Explicitly connect to ensure clean connection
+    await prisma.$connect();
     // Check environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -351,5 +359,8 @@ export async function PUT(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
+  } finally {
+    // Explicitly disconnect to ensure clean connection
+    await prisma.$disconnect();
   }
 }
