@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { PrismaClient } from '@prisma/client';
 
+// Force dynamic rendering since we use request headers
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const prisma = new PrismaClient();
   
@@ -93,7 +96,7 @@ export async function GET(request: NextRequest) {
         email: true,
         displayName: true,
         region: true,
-        avatarUrl: true,
+        profileImageUrl: true,
         createdAt: true,
         updatedAt: true
       }
@@ -106,7 +109,7 @@ export async function GET(request: NextRequest) {
         email: user.email,
         displayName: user.user_metadata?.full_name || null,
         region: null,
-        avatarUrl: user.user_metadata?.avatar_url || null,
+        profileImageUrl: user.user_metadata?.avatar_url || null,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
@@ -210,7 +213,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Handle profile image upload if provided
-    let avatarUrl = null;
+    let profileImageUrl = null;
     if (profileImage) {
       try {
         // Upload image to Supabase Storage
@@ -235,7 +238,7 @@ export async function PUT(request: NextRequest) {
           .from('avatars')
           .getPublicUrl(fileName);
         
-        avatarUrl = urlData.publicUrl;
+        profileImageUrl = urlData.publicUrl;
       } catch (uploadError) {
         console.error('Error handling image upload:', uploadError);
         return NextResponse.json(
@@ -251,13 +254,13 @@ export async function PUT(request: NextRequest) {
       update: {
         displayName: displayName || null,
         region: region,
-        avatarUrl: avatarUrl || null
+        profileImageUrl: profileImageUrl || null
       },
       create: {
         email: user.email,
         displayName: displayName || null,
         region: region,
-        avatarUrl: avatarUrl || null
+        profileImageUrl: profileImageUrl || null
       }
     });
 
@@ -266,7 +269,7 @@ export async function PUT(request: NextRequest) {
       message: 'Profile updated successfully',
       region: region,
       displayName: displayName,
-      avatarUrl: avatarUrl
+      profileImageUrl: profileImageUrl
     });
 
   } catch (error) {

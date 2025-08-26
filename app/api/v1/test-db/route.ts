@@ -7,18 +7,17 @@ export async function GET(request: NextRequest) {
   try {
     console.log('Testing database connection...');
     
-    // Test basic connection
     await prisma.$connect();
     console.log('Database connection successful');
     
-    // Test a simple query
-    const result = await prisma.$queryRaw`SELECT 1 as test`;
-    console.log('Database query successful:', result);
+    // Use a simple findMany query instead of raw SQL
+    const userCount = await prisma.userProfile.count();
+    console.log('Database query successful, user count:', userCount);
     
     return NextResponse.json({
       status: 'ok',
       message: 'Database connection working',
-      result,
+      userCount,
       timestamp: new Date().toISOString()
     });
   } catch (error) {

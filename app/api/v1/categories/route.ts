@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 const prisma = new PrismaClient()
 
 export async function GET() {
@@ -8,7 +11,6 @@ export async function GET() {
     // Get categories from contracts table (simplified approach)
     const categoryStats = await prisma.contract.groupBy({
       by: ['category'],
-      where: { status: 'APPROVED' },
       _count: { category: true }
     })
 

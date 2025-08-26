@@ -1,5 +1,4 @@
-// Simplified schema that works with Supabase's built-in user management
-// This doesn't require external database connections
+// Schema that matches the existing Supabase tables created via SQL
 
 generator client {
   provider = "prisma-client-js"
@@ -10,61 +9,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Simple user profile extension (works with Supabase auth)
+// UserProfile model matching existing table
 model UserProfile {
-  id          String   @id @default(cuid())
-  email       String   @unique // matches Supabase auth user email
-  displayName String?
-  region      String?  // store as string, not relation
-  avatarUrl   String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  email           String   @unique
+  displayName     String?
+  region          String?
+  profileImageUrl String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
-// Simple contract model (no complex relationships)
+// Contract model matching existing table
 model Contract {
-  id          String   @id @default(cuid())
-  userId      String   // Supabase user ID
-  email       String   // user email for display
-  category    String   // store as string
-  region      String   // store as string
-  priceCents  Int
-  unit        String?
-  quantity    Float?
-  description String?
-  vendorName  String?
-  fileKey     String
-  thumbKey    String?
-  takenOn     DateTime?
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  createdAt   DateTime @default(now())
-  
-  @@index([category, region])
-  @@index([status])
-  @@index([priceCents])
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  amount         Decimal?
+  category       String?
+  region         String?
+  imageUrl       String?
+  uploaderEmail  String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
-// Simple review model
+// Review model matching existing table
 model Review {
-  id         String   @id @default(cuid())
-  contractId String
-  userId     String   // Supabase user ID
-  email      String   // user email for display
-  rating     Int      // -1 or +1
-  comment    String?
-  createdAt  DateTime @default(now())
-  
-  @@unique([contractId, userId])
-  @@index([contractId])
-  @@index([userId])
+  id             String   @id @default(cuid())
+  contractId     String
+  reviewerEmail  String
+  rating         Int
+  comment        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
-// Simple tags
+// ContractTag model matching existing table
 model ContractTag {
   id         String   @id @default(cuid())
   contractId String
-  label      String
-  
-  @@index([label])
-  @@index([contractId])
+  tag        String
+  createdAt  DateTime @default(now())
 }
