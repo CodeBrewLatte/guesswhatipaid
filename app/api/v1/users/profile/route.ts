@@ -4,15 +4,24 @@ import { createClient } from '@supabase/supabase-js';
 // Force dynamic rendering since we use request headers
 export const dynamic = 'force-dynamic';
 
-// Create a singleton Prisma client to prevent connection issues
-let prisma: any = null;
+// Global Prisma client for serverless environment
+declare global {
+  var __prisma: any;
+}
 
 function getPrismaClient() {
-  if (!prisma) {
+  if (process.env.NODE_ENV === 'production') {
+    // In production (Vercel), create a new client each time
     const { PrismaClient } = require('@prisma/client');
-    prisma = new PrismaClient();
+    return new PrismaClient();
+  } else {
+    // In development, use global singleton
+    if (!global.__prisma) {
+      const { PrismaClient } = require('@prisma/client');
+      global.__prisma = new PrismaClient();
+    }
+    return global.__prisma;
   }
-  return prisma;
 }
 
 export async function GET(request: NextRequest) {
