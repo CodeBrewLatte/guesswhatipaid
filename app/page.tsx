@@ -82,9 +82,9 @@ export default function HomePage() {
                             alt="Profile" 
                             className="w-8 h-8 rounded-full object-cover"
                           />
-                        ) : user.displayName ? (
+                        ) : user.user_metadata?.full_name ? (
                           <span className="text-sm font-medium text-primary-600">
-                            {user.displayName.charAt(0).toUpperCase()}
+                            {user.user_metadata.full_name.charAt(0).toUpperCase()}
                           </span>
                         ) : (
                           <span className="text-sm font-medium text-primary-600">

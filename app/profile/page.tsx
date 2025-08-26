@@ -74,8 +74,6 @@ export default function ProfilePage() {
       // Set display name (from Google SSO or existing data)
       if (user.user_metadata?.full_name) {
         setDisplayName(user.user_metadata.full_name);
-      } else if (user.displayName) {
-        setDisplayName(user.displayName);
       }
       
       // Set region if it exists (we'll fetch this from the database)

@@ -182,7 +182,7 @@ export default function ContractDetailPage() {
                 {contract.takenOn ? formatDate(contract.takenOn) : formatDate(contract.createdAt)}
               </div>
               <div className="text-sm text-gray-600">
-                by {contract.user.displayName || 'Anonymous'}
+                by {contract.user.displayName || contract.user.email || 'Anonymous'}
               </div>
             </div>
           </div>
@@ -302,7 +302,7 @@ export default function ContractDetailPage() {
                         {review.rating === 1 ? '👍' : '👎'}
                       </span>
                       <span className="font-medium text-gray-900">
-                        {review.user.displayName || 'Anonymous'}
+                        {review.user.displayName || review.user.email || 'Anonymous'}
                       </span>
                     </div>
                     <span className="text-sm text-gray-500">
