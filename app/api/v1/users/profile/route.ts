@@ -249,6 +249,13 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update or create user profile in our simplified database
+    console.log('Attempting to upsert profile with data:', {
+      email: user.email,
+      displayName: displayName || null,
+      region: region,
+      profileImageUrl: profileImageUrl || null
+    });
+    
     const userProfile = await prisma.userProfile.upsert({
       where: { email: user.email },
       update: {
@@ -263,6 +270,8 @@ export async function PUT(request: NextRequest) {
         profileImageUrl: profileImageUrl || null
       }
     });
+
+    console.log('Profile upsert result:', userProfile);
 
     return NextResponse.json({ 
       success: true, 
