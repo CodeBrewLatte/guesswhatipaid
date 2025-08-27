@@ -23,7 +23,11 @@ export async function GET(request: NextRequest) {
       // Add connection parameters to prevent prepared statement conflicts
       connectionTimeoutMillis: 10000,
       statement_timeout: 30000,
-      query_timeout: 30000
+      query_timeout: 30000,
+      // Disable SSL verification for Supabase
+      ssl: {
+        rejectUnauthorized: false
+      }
     });
     
     try {
