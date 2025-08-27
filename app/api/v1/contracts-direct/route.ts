@@ -127,9 +127,9 @@ export async function POST(request: NextRequest) {
       `INSERT INTO "Contract" (
         "id", "title", "description", "priceCents", "unit", "quantity", 
         "category", "region", "thumbKey", "vendorName", "takenOn", 
-        "uploaderEmail", "createdAt", "updatedAt"
+        "uploaderEmail", "status", "createdAt", "updatedAt"
       ) VALUES (
-        gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
+        gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'PENDING', NOW(), NOW()
       ) RETURNING id`,
       [
         description || 'Contract Upload',
