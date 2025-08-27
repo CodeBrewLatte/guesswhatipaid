@@ -52,6 +52,30 @@ export default function HomePage() {
       {/* Admin Navigation - Only shows for admin users */}
       <AdminNav className="mx-4 mt-4" />
       
+      {/* Debug Info - Remove this after fixing */}
+      {user && (
+        <div className="mx-4 mt-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
+          <h3 className="font-semibold text-yellow-800">Debug Info (Remove after fixing)</h3>
+          <p className="text-sm text-yellow-700">User: {user.email}</p>
+          <p className="text-sm text-yellow-700">User ID: {user.id}</p>
+          <button 
+            onClick={async () => {
+              try {
+                const { data: { session } } = await supabase.auth.getSession();
+                console.log('Current session:', session);
+                console.log('Access token exists:', !!session?.access_token);
+                console.log('Token length:', session?.access_token?.length || 0);
+              } catch (error) {
+                console.error('Error getting session:', error);
+              }
+            }}
+            className="mt-2 px-3 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700"
+          >
+            Check Session in Console
+          </button>
+        </div>
+      )}
+      
       {/* Navigation */}
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

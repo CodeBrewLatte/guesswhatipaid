@@ -15,18 +15,43 @@ export default function AdminNav({ className = '' }: AdminNavProps) {
   const [pendingCount, setPendingCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
+  const getAuthToken = async () => {
+    // Get the auth token from Supabase session
+    if (typeof window !== 'undefined') {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        console.log('Session found:', !!session, 'Token exists:', !!session?.access_token)
+        return session?.access_token || ''
+      } catch (error) {
+        console.error('Error getting session:', error)
+        return ''
+      }
+    }
+    return ''
+  }
+
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user?.email) {
+        console.log('No user email, skipping admin check')
         setIsAdmin(false)
         setLoading(false)
         return
       }
 
+      console.log('Checking admin status for user:', user.email)
+
       try {
         // Check if user is admin by trying to fetch admin data
         const token = await getAuthToken();
-        console.log('Admin check token:', token ? 'Token exists' : 'No token');
+        console.log('Admin check token length:', token ? token.length : 0);
+        
+        if (!token) {
+          console.log('No token available, cannot check admin status')
+          setIsAdmin(false)
+          setLoading(false)
+          return
+        }
         
         const response = await fetch('/api/v1/admin/contracts?status=PENDING', {
           headers: {
@@ -40,10 +65,16 @@ export default function AdminNav({ className = '' }: AdminNavProps) {
           const contracts = await response.json()
           setPendingCount(contracts.length)
           setIsAdmin(true)
+          console.log('User is admin, contracts found:', contracts.length)
         } else if (response.status === 403) {
+          console.log('User is not admin (403 response)')
+          setIsAdmin(false)
+        } else {
+          console.log('Unexpected response status:', response.status)
           setIsAdmin(false)
         }
       } catch (error) {
+        console.error('Error checking admin status:', error)
         setIsAdmin(false)
       } finally {
         setLoading(false)
@@ -52,15 +83,6 @@ export default function AdminNav({ className = '' }: AdminNavProps) {
 
     checkAdminStatus()
   }, [user])
-
-  const getAuthToken = async () => {
-    // Get the auth token from Supabase session
-    if (typeof window !== 'undefined') {
-      const { data: { session } } = await supabase.auth.getSession()
-      return session?.access_token || ''
-    }
-    return ''
-  }
 
   if (loading) {
     return null // Don't show anything while checking
