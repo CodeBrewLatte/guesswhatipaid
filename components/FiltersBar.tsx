@@ -15,8 +15,8 @@ interface FiltersBarProps {
 }
 
 export function FiltersBar({ filters, onFilterChange }: FiltersBarProps) {
-  const [categories, setCategories] = useState<string[]>([])
-  const [regions, setRegions] = useState<string[]>([])
+  const [categories, setCategories] = useState<Array<{name: string, count: number} | string>>([])
+  const [regions, setRegions] = useState<Array<{name: string, count: number} | string>>([])
   const [localFilters, setLocalFilters] = useState(filters)
 
   // Fetch categories and regions
@@ -120,8 +120,8 @@ export function FiltersBar({ filters, onFilterChange }: FiltersBarProps) {
           >
             <option value="">All categories</option>
             {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
+              <option key={category.name || category} value={category.name || category}>
+                {category.name || category}
               </option>
             ))}
           </select>
@@ -139,8 +139,8 @@ export function FiltersBar({ filters, onFilterChange }: FiltersBarProps) {
           >
             <option value="">All regions</option>
             {regions.map((region) => (
-              <option key={region} value={region}>
-                {region}
+              <option key={region.name || region} value={region.name || region}>
+                {region.name || region}
               </option>
             ))}
           </select>
