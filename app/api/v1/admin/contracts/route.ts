@@ -65,22 +65,22 @@ export async function GET(request: NextRequest) {
         c.id,
         c.title,
         c.description,
-        c.priceCents,
+        c."priceCents",
         c.unit,
         c.quantity,
         c.category,
         c.region,
-        c.thumbKey,
-        c.vendorName,
-        c.takenOn,
-        c.uploaderEmail,
+        c."thumbKey",
+        c."vendorName",
+        c."takenOn",
+        c."uploaderEmail",
         c.status,
         c."createdAt",
         c."updatedAt",
         up."displayName",
         up.email as userEmail
       FROM "Contract" c
-      LEFT JOIN "UserProfile" up ON c.uploaderEmail = up.email
+      LEFT JOIN "UserProfile" up ON c."uploaderEmail" = up.email
       ${whereClause}
       ORDER BY c."createdAt" DESC
     `, queryParams);
