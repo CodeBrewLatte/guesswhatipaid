@@ -67,8 +67,8 @@ export async function GET(request: NextRequest) {
       
       return NextResponse.json({
         error: 'Prisma error',
-        details: prismaError.message,
-        name: prismaError.name
+        details: prismaError instanceof Error ? prismaError.message : 'Unknown error',
+        name: prismaError instanceof Error ? prismaError.name : 'Unknown'
       }, { status: 500 });
     }
     
