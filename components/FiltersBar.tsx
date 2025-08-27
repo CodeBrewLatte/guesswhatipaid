@@ -19,6 +19,15 @@ export function FiltersBar({ filters, onFilterChange }: FiltersBarProps) {
   const [regions, setRegions] = useState<Array<{name: string, count: number} | string>>([])
   const [localFilters, setLocalFilters] = useState(filters)
 
+  // Helper function to safely extract category/region name and value
+  const getItemName = (item: {name: string, count: number} | string) => {
+    return typeof item === 'string' ? item : item.name
+  }
+
+  const getItemValue = (item: {name: string, count: number} | string) => {
+    return typeof item === 'string' ? item : item.name
+  }
+
   // Fetch categories and regions
   useEffect(() => {
     const fetchData = async () => {
@@ -120,8 +129,8 @@ export function FiltersBar({ filters, onFilterChange }: FiltersBarProps) {
           >
             <option value="">All categories</option>
             {categories.map((category) => (
-              <option key={category.name || category} value={category.name || category}>
-                {category.name || category}
+              <option key={getItemValue(category)} value={getItemValue(category)}>
+                {getItemName(category)}
               </option>
             ))}
           </select>
@@ -139,8 +148,8 @@ export function FiltersBar({ filters, onFilterChange }: FiltersBarProps) {
           >
             <option value="">All regions</option>
             {regions.map((region) => (
-              <option key={region.name || region} value={region.name || region}>
-                {region.name || region}
+              <option key={getItemValue(region)} value={getItemValue(region)}>
+                {getItemName(region)}
               </option>
             ))}
           </select>

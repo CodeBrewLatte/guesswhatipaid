@@ -24,6 +24,15 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
   const [regions, setRegions] = useState<Array<{name: string, count: number} | string>>([])
   const [newTag, setNewTag] = useState('')
 
+  // Helper function to safely extract category/region name and value
+  const getItemName = (item: {name: string, count: number} | string) => {
+    return typeof item === 'string' ? item : item.name
+  }
+
+  const getItemValue = (item: {name: string, count: number} | string) => {
+    return typeof item === 'string' ? item : item.name
+  }
+
   // Fetch categories and regions
   useEffect(() => {
     const fetchData = async () => {
@@ -122,8 +131,8 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
           >
             <option value="">Select a category</option>
             {categories.map((category) => (
-              <option key={category.name || category} value={category.name || category}>
-                {category.name || category}
+              <option key={getItemValue(category)} value={getItemValue(category)}>
+                {getItemName(category)}
               </option>
             ))}
           </select>
