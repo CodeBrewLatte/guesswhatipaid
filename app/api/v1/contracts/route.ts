@@ -56,11 +56,12 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7);
     
-    // Create a Supabase client
+    // Create a Supabase client with the user's JWT token
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       }
     });
     
