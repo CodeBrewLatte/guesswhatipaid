@@ -47,16 +47,17 @@ export default function HomePage() {
     setShowRegionModal(false);
   };
 
-  // Test change to verify Vercel deployment after repo made private
+  // Test change to verify Vercel deployment after repo made private - DEPLOY TEST 2024-01-15
+  console.log('🚀 DEPLOY TEST: This should show "DEPLOY TEST 2024-01-15" if latest code is deployed');
   return (
     <div className="min-h-screen">
       {/* Admin Navigation - Only shows for admin users */}
       <AdminNav className="mx-4 mt-4" />
       
-      {/* Debug Info - Remove this after fixing */}
+      {/* Debug Info - Remove this after fixing - DEPLOY TEST 2024-01-15 */}
       {user && (
         <div className="mx-4 mt-4 p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
-          <h3 className="font-semibold text-yellow-800">Debug Info (Remove after fixing)</h3>
+          <h3 className="font-semibold text-yellow-800">Debug Info (Remove after fixing) - DEPLOY TEST 2024-01-15</h3>
           <p className="text-sm text-yellow-700">User: {user.email}</p>
           <p className="text-sm text-yellow-700">User ID: {user.id}</p>
           <button 
