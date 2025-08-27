@@ -91,10 +91,12 @@ export default function AdminReviewPage() {
 
   const handleStatusChange = async (contractId: string, status: 'APPROVED' | 'REJECTED') => {
     try {
+      const token = await getAuthToken()
       const response = await fetch(`/api/v1/admin/contracts/${contractId}/status`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status })
       })
@@ -102,6 +104,8 @@ export default function AdminReviewPage() {
       if (response.ok) {
         // Refresh the list
         fetchContracts()
+      } else {
+        console.error('Failed to update contract status:', response.status, response.statusText)
       }
     } catch (error) {
       console.error('Error updating contract status:', error)
