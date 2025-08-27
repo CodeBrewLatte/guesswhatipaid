@@ -11,9 +11,26 @@ declare global {
 
 function getPrismaClient() {
   if (process.env.NODE_ENV === 'production') {
-    // In production (Vercel), create a new client each time
+    // In production (Vercel), create a new client with aggressive connection management
     const { PrismaClient } = require('@prisma/client');
-    return new PrismaClient();
+    const databaseUrl = process.env.DATABASE_URL;
+    
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL environment variable is required');
+    }
+    
+    // Add connection parameters to prevent prepared statement conflicts
+    const enhancedUrl = databaseUrl + 
+      (databaseUrl.includes('?') ? '&' : '?') + 
+      'connection_limit=1&pool_timeout=0&connect_timeout=10&statement_timeout=30000';
+    
+    return new PrismaClient({
+      datasources: {
+        db: {
+          url: enhancedUrl
+        }
+      }
+    });
   } else {
     // In development, use global singleton
     if (!global.__prisma) {
@@ -25,13 +42,23 @@ function getPrismaClient() {
 }
 
 export async function GET(request: NextRequest) {
-  const prisma = getPrismaClient();
+  let prisma: any = null;
   
   try {
     console.log('Profile GET request started');
     
-    // Explicitly connect to ensure clean connection
-    await prisma.$connect();
+    // Get Prisma client with error handling
+    try {
+      prisma = getPrismaClient();
+      // Explicitly connect to ensure clean connection
+      await prisma.$connect();
+    } catch (prismaError) {
+      console.error('Prisma client creation/connection failed:', prismaError);
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 500 }
+      );
+    }
     
     // Check environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -141,16 +168,32 @@ export async function GET(request: NextRequest) {
     );
   } finally {
     // Explicitly disconnect to ensure clean connection
-    await prisma.$disconnect();
+    if (prisma) {
+      try {
+        await prisma.$disconnect();
+      } catch (disconnectError) {
+        console.error('Error disconnecting Prisma client:', disconnectError);
+      }
+    }
   }
 }
 
 export async function PUT(request: NextRequest) {
-  const prisma = getPrismaClient();
+  let prisma: any = null;
   
   try {
-    // Explicitly connect to ensure clean connection
-    await prisma.$connect();
+    // Get Prisma client with error handling
+    try {
+      prisma = getPrismaClient();
+      // Explicitly connect to ensure clean connection
+      await prisma.$connect();
+    } catch (prismaError) {
+      console.error('Prisma client creation/connection failed:', prismaError);
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 500 }
+      );
+    }
     // Check environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -399,6 +442,12 @@ export async function PUT(request: NextRequest) {
     );
   } finally {
     // Explicitly disconnect to ensure clean connection
-    await prisma.$disconnect();
+    if (prisma) {
+      try {
+        await prisma.$disconnect();
+      } catch (disconnectError) {
+        console.error('Error disconnecting Prisma client:', disconnectError);
+      }
+    }
   }
 }
