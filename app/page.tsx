@@ -47,6 +47,7 @@ export default function HomePage() {
     setShowRegionModal(false);
   };
 
+  // Test change to verify Vercel deployment after repo made private
   return (
     <div className="min-h-screen">
       {/* Admin Navigation - Only shows for admin users */}
