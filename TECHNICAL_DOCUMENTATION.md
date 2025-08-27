@@ -55,17 +55,27 @@ DELETE: bucket_id = 'avatars' AND auth.role() = 'authenticated'
   - Bypasses Prisma entirely
   - Uses direct PostgreSQL connections
   - Handles profile updates and image uploads
+- **`/api/v1/regions-direct`**: Available regions (GET)
+  - Direct PostgreSQL query for unique regions
+  - Used by contract upload workflow and browse filters
+- **`/api/v1/categories-direct`**: Contract categories (GET)
+  - Direct PostgreSQL query for unique categories
+  - Used by contract upload workflow and browse filters
 
 #### **Broken Endpoints (Prisma)**
 - **`/api/v1/users/profile`**: Original profile endpoint
   - Suffers from "prepared statement already exists" errors
   - Intermittent failures in Vercel environment
   - Should be avoided
+- **`/api/v1/regions`**: Original regions endpoint
+  - Same Prisma connection issues
+  - Use `/api/v1/regions-direct` instead
+- **`/api/v1/categories`**: Original categories endpoint
+  - Same Prisma connection issues
+  - Use `/api/v1/categories-direct` instead
 
 #### **Other Endpoints**
 - **`/api/v1/contracts`**: Contract upload and management
-- **`/api/v1/categories`**: Contract categories
-- **`/api/v1/regions`**: Available regions
 - **`/api/v1/debug-db-direct`**: Database diagnostics
 
 ### **5. Frontend Architecture**
@@ -115,12 +125,18 @@ DATABASE_URL=your_supabase_postgres_connection_string
 - **Solution**: Direct PostgreSQL connections for critical operations
 - **Trade-off**: More manual SQL but 100% reliable
 
-### **2. SSL Configuration for Supabase**
+### **2. Systematic Prisma Bypass Pattern**
+- **Discovery**: All Prisma endpoints suffer from the same connection issues
+- **Pattern**: Create `-direct` versions of all critical endpoints
+- **Implementation**: Use direct PostgreSQL client with SSL bypass
+- **Naming Convention**: `{endpoint-name}-direct` for working versions
+
+### **3. SSL Configuration for Supabase**
 - **Issue**: Self-signed certificates cause connection failures
 - **Solution**: Modify connection string to use `sslmode=no-verify`
 - **Implementation**: String replacement in connection setup
 
-### **3. Authentication Strategy**
+### **4. Authentication Strategy**
 - **Approach**: Supabase Auth with JWT tokens
 - **Security**: Bearer token authentication on all protected endpoints
 - **Session**: Client-side session management
@@ -142,6 +158,11 @@ DATABASE_URL=your_supabase_postgres_connection_string
 - **Solution**: Use `/api/v1/users/profile-direct` endpoint
 - **Verification**: Check Vercel logs for specific error messages
 
+### **4. Regions and Categories Not Loading**
+- **Cause**: Same Prisma connection issues affecting multiple endpoints
+- **Solution**: Use `/api/v1/regions-direct` and `/api/v1/categories-direct`
+- **Impact**: Contract upload workflow and browse filters affected
+
 ## **Development Workflow**
 
 ### **1. Adding New Features**
@@ -149,12 +170,18 @@ DATABASE_URL=your_supabase_postgres_connection_string
 - **API**: Follow existing pattern with proper error handling
 - **Frontend**: Update all relevant components consistently
 
-### **2. Debugging Database Issues**
+### **2. Fixing Prisma Issues**
+- **Pattern**: Create `-direct` version of broken endpoint
+- **Implementation**: Use direct PostgreSQL client with SSL bypass
+- **Frontend**: Update all components to use new working endpoint
+- **Testing**: Verify endpoint works before updating frontend
+
+### **3. Debugging Database Issues**
 - **Use**: `/api/v1/debug-db-direct` endpoint
 - **Check**: Vercel function logs for specific errors
 - **Verify**: Database schema matches Prisma expectations
 
-### **3. Testing Changes**
+### **4. Testing Changes**
 - **Local**: npm run dev for development
 - **Deploy**: git push origin main for Vercel deployment
 - **Monitor**: Vercel logs for runtime errors
@@ -209,6 +236,21 @@ DATABASE_URL=your_supabase_postgres_connection_string
 - **Graceful Degradation**: Fallback mechanisms for failed operations
 - **User Feedback**: Clear error messages for common issues
 - **Recovery**: Automatic retry mechanisms where appropriate
+
+## **Current Working State**
+
+### **1. Fully Functional Endpoints**
+- **Profile Management**: `/api/v1/users/profile-direct` (GET/PUT)
+- **Regions**: `/api/v1/regions-direct` (GET)
+- **Categories**: `/api/v1/categories-direct` (GET)
+- **Contract Upload**: `/api/v1/contracts` (POST)
+- **Database Diagnostics**: `/api/v1/debug-db-direct` (GET)
+
+### **2. Working Frontend Components**
+- **Profile Page**: Full CRUD operations with image uploads
+- **Contract Upload**: Complete workflow with metadata
+- **Browse Page**: Filters and search functionality
+- **Region Setup**: User region configuration
 
 ## **Future Improvements**
 
