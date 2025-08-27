@@ -25,11 +25,16 @@ export default function AdminNav({ className = '' }: AdminNavProps) {
 
       try {
         // Check if user is admin by trying to fetch admin data
+        const token = await getAuthToken();
+        console.log('Admin check token:', token ? 'Token exists' : 'No token');
+        
         const response = await fetch('/api/v1/admin/contracts?status=PENDING', {
           headers: {
-            'Authorization': `Bearer ${await getAuthToken()}`
+            'Authorization': `Bearer ${token}`
           }
-        })
+        });
+        
+        console.log('Admin check response status:', response.status);
 
         if (response.ok) {
           const contracts = await response.json()
