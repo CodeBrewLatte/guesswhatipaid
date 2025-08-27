@@ -33,21 +33,16 @@ export default function AdminNav({ className = '' }: AdminNavProps) {
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (!user?.email) {
-        console.log('No user email, skipping admin check')
         setIsAdmin(false)
         setLoading(false)
         return
       }
 
-      console.log('Checking admin status for user:', user.email)
-
       try {
         // Check if user is admin by trying to fetch admin data
         const token = await getAuthToken();
-        console.log('Admin check token length:', token ? token.length : 0);
         
         if (!token) {
-          console.log('No token available, cannot check admin status')
           setIsAdmin(false)
           setLoading(false)
           return
@@ -58,19 +53,14 @@ export default function AdminNav({ className = '' }: AdminNavProps) {
             'Authorization': `Bearer ${token}`
           }
         });
-        
-        console.log('Admin check response status:', response.status);
 
         if (response.ok) {
           const contracts = await response.json()
           setPendingCount(contracts.length)
           setIsAdmin(true)
-          console.log('User is admin, contracts found:', contracts.length)
         } else if (response.status === 403) {
-          console.log('User is not admin (403 response)')
           setIsAdmin(false)
         } else {
-          console.log('Unexpected response status:', response.status)
           setIsAdmin(false)
         }
       } catch (error) {
