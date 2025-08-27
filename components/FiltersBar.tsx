@@ -15,8 +15,8 @@ interface FiltersBarProps {
 }
 
 export function FiltersBar({ filters, onFilterChange }: FiltersBarProps) {
-  const [categories, setCategories] = useState<Array<{ name: string; count: number }>>([])
-  const [regions, setRegions] = useState<Array<{ name: string; count: number }>>([])
+  const [categories, setCategories] = useState<string[]>([])
+  const [regions, setRegions] = useState<string[]>([])
   const [localFilters, setLocalFilters] = useState(filters)
 
   // Fetch categories and regions

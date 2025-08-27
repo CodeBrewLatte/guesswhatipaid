@@ -20,8 +20,8 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
     tags: [] as string[]
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [categories, setCategories] = useState<Array<{ name: string; count: number }>>([])
-  const [regions, setRegions] = useState<Array<{ name: string; count: number }>>([])
+  const [categories, setCategories] = useState<string[]>([])
+  const [regions, setRegions] = useState<string[]>([])
   const [newTag, setNewTag] = useState('')
 
   // Fetch categories and regions
