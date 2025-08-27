@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../../src/contexts/AuthContext'
 import Link from 'next/link'
+import { supabase } from '../../../src/utils/supabase'
 
 interface Contract {
   id: string
@@ -77,7 +78,8 @@ export default function AdminReviewPage() {
 
   const getAuthToken = async () => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('supabase.auth.token') || ''
+      const { data: { session } } = await supabase.auth.getSession()
+      return session?.access_token || ''
     }
     return ''
   }

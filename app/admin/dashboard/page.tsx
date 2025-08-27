@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../../src/contexts/AuthContext'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { supabase } from '../../../src/utils/supabase'
 
 interface AdminStats {
   totalContracts: number
@@ -65,7 +66,8 @@ export default function AdminDashboardPage() {
 
   const getAuthToken = async () => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('supabase.auth.token') || ''
+      const { data: { session } } = await supabase.auth.getSession()
+      return session?.access_token || ''
     }
     return ''
   }

@@ -3,6 +3,7 @@
 import { useAuth } from '../src/contexts/AuthContext'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { supabase } from '../src/utils/supabase'
 
 interface AdminNavProps {
   className?: string
@@ -48,10 +49,10 @@ export default function AdminNav({ className = '' }: AdminNavProps) {
   }, [user])
 
   const getAuthToken = async () => {
-    // Get the auth token from localStorage or wherever you store it
-    // This is a simplified version - you might need to adjust based on your auth setup
+    // Get the auth token from Supabase session
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('supabase.auth.token') || ''
+      const { data: { session } } = await supabase.auth.getSession()
+      return session?.access_token || ''
     }
     return ''
   }
