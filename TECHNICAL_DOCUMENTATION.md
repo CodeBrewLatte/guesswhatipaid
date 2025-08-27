@@ -55,12 +55,20 @@ DELETE: bucket_id = 'avatars' AND auth.role() = 'authenticated'
   - Bypasses Prisma entirely
   - Uses direct PostgreSQL connections
   - Handles profile updates and image uploads
-- **`/api/v1/regions-direct`**: Available regions (GET)
-  - Direct PostgreSQL query for unique regions
+- **`/api/v1/regions-direct-v2`**: Dynamic regions from Contract table (GET)
+  - Direct PostgreSQL query for unique regions with counts
+  - Fallback to hardcoded US states if database fails
   - Used by contract upload workflow and browse filters
-- **`/api/v1/categories-direct`**: Contract categories (GET)
-  - Direct PostgreSQL query for unique categories
+- **`/api/v1/categories-direct-v2`**: Dynamic categories from Contract table (GET)
+  - Direct PostgreSQL query for unique categories with counts
+  - Fallback to hardcoded categories if database fails
   - Used by contract upload workflow and browse filters
+- **`/api/v1/contracts-direct`**: Contract submission and file upload (POST)
+  - Bypasses Prisma entirely
+  - Handles file uploads to Supabase Storage
+  - Creates contract records via direct SQL
+- **`/api/v1/debug-db-direct`**: Database diagnostics (GET)
+- **`/api/v1/debug-profile-direct`**: Profile debugging (GET)
 
 #### **Broken Endpoints (Prisma)**
 - **`/api/v1/users/profile`**: Original profile endpoint
@@ -69,14 +77,15 @@ DELETE: bucket_id = 'avatars' AND auth.role() = 'authenticated'
   - Should be avoided
 - **`/api/v1/regions`**: Original regions endpoint
   - Same Prisma connection issues
-  - Use `/api/v1/regions-direct` instead
+  - Use `/api/v1/regions-direct-v2` instead
 - **`/api/v1/categories`**: Original categories endpoint
   - Same Prisma connection issues
-  - Use `/api/v1/categories-direct` instead
+  - Use `/api/v1/categories-direct-v2` instead
+- **`/api/v1/contracts`**: Original contracts endpoint
+  - Same Prisma connection issues
+  - Use `/api/v1/contracts-direct` instead
 
-#### **Other Endpoints**
-- **`/api/v1/contracts`**: Contract upload and management
-- **`/api/v1/debug-db-direct`**: Database diagnostics
+
 
 ### **5. Frontend Architecture**
 

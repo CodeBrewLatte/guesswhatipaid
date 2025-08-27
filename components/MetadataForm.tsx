@@ -29,8 +29,8 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
     const fetchData = async () => {
       try {
         const [categoriesRes, regionsRes] = await       Promise.all([
-        fetch('/api/v1/categories-direct'),
-        fetch('/api/v1/regions-direct')
+        fetch('/api/v1/categories-direct-v2'),
+        fetch('/api/v1/regions-direct-v2')
       ])
         
         if (categoriesRes.ok) {
