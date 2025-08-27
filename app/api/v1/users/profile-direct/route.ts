@@ -276,8 +276,8 @@ export async function PUT(request: NextRequest) {
     } else {
       // Create new profile
       const createResult = await client.query(
-        `INSERT INTO "UserProfile" (email, "displayName", region, "profileImageUrl", "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO "UserProfile" (id, email, "displayName", region, "profileImageUrl", "createdAt", "updatedAt")
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
          RETURNING *`,
         [user.email, displayName || null, region, profileImageUrl || null, new Date(), new Date()]
       );
