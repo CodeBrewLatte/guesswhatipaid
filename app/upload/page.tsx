@@ -143,8 +143,17 @@ export default function UploadPage() {
         formData.append('region', '');
       }
 
+      // Get the session token for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch('/api/v1/contracts', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: formData
       })
 
