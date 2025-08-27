@@ -33,7 +33,12 @@ export default function AdminReviewPage() {
   const fetchContracts = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/v1/admin/contracts?status=${filter}`)
+      const token = await getAuthToken()
+      const response = await fetch(`/api/v1/admin/contracts?status=${filter}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setContracts(data)
