@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '../src/contexts/AuthContext'
 import { supabase } from '../src/utils/supabase'
 import { RegionSetupModal } from '@/components/RegionSetupModal'
+import AdminNav from '@/components/AdminNav'
 
 export default function HomePage() {
   const { user, signOut } = useAuth();
@@ -48,6 +49,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
+      {/* Admin Navigation - Only shows for admin users */}
+      <AdminNav className="mx-4 mt-4" />
+      
       {/* Navigation */}
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

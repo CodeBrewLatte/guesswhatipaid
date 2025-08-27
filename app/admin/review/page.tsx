@@ -26,6 +26,8 @@ export default function AdminReviewPage() {
   const [contracts, setContracts] = useState<Contract[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING')
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [adminCheckLoading, setAdminCheckLoading] = useState(true)
 
   const fetchContracts = async () => {
     setLoading(true)
@@ -43,8 +45,42 @@ export default function AdminReviewPage() {
   }
 
   useEffect(() => {
-    fetchContracts()
-  }, [filter])
+    const checkAdminAccess = async () => {
+      if (!user?.email) {
+        setAdminCheckLoading(false)
+        return
+      }
+
+      try {
+        // Check if user is admin by trying to fetch admin data
+        const response = await fetch('/api/v1/admin/contracts?status=PENDING', {
+          headers: {
+            'Authorization': `Bearer ${await getAuthToken()}`
+          }
+        })
+
+        if (response.status === 403) {
+          setIsAdmin(false)
+        } else if (response.ok) {
+          setIsAdmin(true)
+          fetchContracts() // Only fetch contracts if admin
+        }
+      } catch (error) {
+        setIsAdmin(false)
+      } finally {
+        setAdminCheckLoading(false)
+      }
+    }
+
+    checkAdminAccess()
+  }, [user, filter])
+
+  const getAuthToken = async () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('supabase.auth.token') || ''
+    }
+    return ''
+  }
 
   const handleStatusChange = async (contractId: string, status: 'APPROVED' | 'REJECTED') => {
     try {
@@ -84,14 +120,54 @@ export default function AdminReviewPage() {
     })
   }
 
-  if (!isSignedIn) {
+  if (adminCheckLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-6">You need to be signed in to access this page</p>
-          <Link href="/" className="btn-primary">
-            Go Home
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verifying admin access...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <strong className="font-bold">Access Denied</strong>
+            <p className="text-sm mt-1">You need to be signed in to access this page</p>
+          </div>
+          <p className="text-gray-600 mb-6">
+            This area is restricted to administrators only.
+          </p>
+          <div className="space-y-3">
+            <Link href="/auth/signin" className="btn-primary block">
+              Sign In
+            </Link>
+            <Link href="/" className="btn-secondary block">
+              Return to Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <strong className="font-bold">Admin Access Required</strong>
+            <p className="text-sm mt-1">You don't have permission to access this area</p>
+          </div>
+          <p className="text-gray-600 mb-6">
+            This area is restricted to administrators only. If you believe this is an error, please contact support.
+          </p>
+          <Link href="/" className="btn-primary block">
+            Return to Home
           </Link>
         </div>
       </div>

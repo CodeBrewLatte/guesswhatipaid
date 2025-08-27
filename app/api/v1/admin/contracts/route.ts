@@ -34,6 +34,18 @@ export async function GET(request: NextRequest) {
     // Connect to database
     await dbClient.connect();
     
+    // Build the WHERE clause based on status
+    let whereClause = '';
+    let queryParams: string[] = [];
+    
+    if (status === 'ALL') {
+      whereClause = '';
+      queryParams = [];
+    } else {
+      whereClause = 'WHERE c.status = $1';
+      queryParams = [status];
+    }
+    
     // Get contracts with status filter
     const contractsResult = await dbClient.query(`
       SELECT 
@@ -58,10 +70,10 @@ export async function GET(request: NextRequest) {
       FROM "Contract" c
       LEFT JOIN "UserProfile" up ON c.uploaderEmail = up.email
       LEFT JOIN "ContractTag" ct ON c.id = ct."contractId"
-      WHERE c.status = $1
+      ${whereClause}
       GROUP BY c.id, up."displayName", up.email
       ORDER BY c."createdAt" DESC
-    `, [status]);
+    `, queryParams);
     
     const contracts = contractsResult.rows.map(row => ({
       id: row.id,
