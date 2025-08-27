@@ -36,17 +36,17 @@ export async function GET(request: NextRequest) {
     await client.connect();
     console.log('Direct PostgreSQL connection successful');
     
-    // Fetch unique regions using direct SQL
-    const regionsResult = await client.query(`
-      SELECT DISTINCT region 
-      FROM "Contract" 
-      WHERE region IS NOT NULL AND region != ''
-      ORDER BY region
-    `);
-    
     await client.end();
     
-    const regions = regionsResult.rows.map(row => row.region);
+    // Return hardcoded US states since this is a predefined list
+    const regions = [
+      'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+      'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+      'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+      'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+      'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+    ];
+    
     console.log('Regions fetched successfully:', regions);
     
     return NextResponse.json({

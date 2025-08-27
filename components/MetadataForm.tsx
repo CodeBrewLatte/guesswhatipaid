@@ -122,8 +122,8 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
           >
             <option value="">Select a category</option>
             {categories.map((category) => (
-              <option key={category.name} value={category.name}>
-                {category.name} ({category.count})
+              <option key={category} value={category}>
+                {category}
               </option>
             ))}
           </select>

@@ -36,17 +36,33 @@ export async function GET(request: NextRequest) {
     await client.connect();
     console.log('Direct PostgreSQL connection successful');
     
-    // Fetch unique categories using direct SQL
-    const categoriesResult = await client.query(`
-      SELECT DISTINCT category 
-      FROM "Contract" 
-      WHERE category IS NOT NULL AND category != ''
-      ORDER BY category
-    `);
-    
     await client.end();
     
-    const categories = categoriesResult.rows.map(row => row.category);
+    // Return hardcoded categories since this is a predefined list
+    const categories = [
+      'Home Renovation',
+      'Plumbing',
+      'Electrical',
+      'HVAC',
+      'Landscaping',
+      'Roofing',
+      'Painting',
+      'Flooring',
+      'Kitchen Remodel',
+      'Bathroom Remodel',
+      'Deck & Patio',
+      'Fencing',
+      'Garage & Shed',
+      'Basement',
+      'Attic',
+      'Windows & Doors',
+      'Driveway & Walkways',
+      'Pest Control',
+      'Cleaning Services',
+      'Moving & Storage',
+      'Other'
+    ];
+    
     console.log('Categories fetched successfully:', categories);
     
     return NextResponse.json({

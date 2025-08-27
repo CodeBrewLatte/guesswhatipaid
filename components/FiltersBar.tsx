@@ -120,8 +120,8 @@ export function FiltersBar({ filters, onFilterChange }: FiltersBarProps) {
           >
             <option value="">All categories</option>
             {categories.map((category) => (
-              <option key={category.name} value={category.name}>
-                {category.name} ({category.count})
+              <option key={category} value={category}>
+                {category}
               </option>
             ))}
           </select>
