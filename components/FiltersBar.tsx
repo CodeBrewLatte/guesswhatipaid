@@ -139,8 +139,8 @@ export function FiltersBar({ filters, onFilterChange }: FiltersBarProps) {
           >
             <option value="">All regions</option>
             {regions.map((region) => (
-              <option key={region.name} value={region.name}>
-                {region.name} ({region.count})
+              <option key={region} value={region}>
+                {region}
               </option>
             ))}
           </select>
