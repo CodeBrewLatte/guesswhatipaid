@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     
     console.log('About to execute query with whereClause:', whereClause, 'and params:', queryParams);
     
-    // Get contracts with status filter - simplified query
+    // Get contracts with status filter - using EXACT database schema
     console.log('Executing SQL query...');
     const contractsResult = await dbClient.query(`
       SELECT 
