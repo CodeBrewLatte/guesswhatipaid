@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from 'pg';
-import { adminAuthMiddleware } from '../../middleware';
+import { adminAuthMiddleware } from '../../../middleware';
 
 export const dynamic = 'force-dynamic';
 
