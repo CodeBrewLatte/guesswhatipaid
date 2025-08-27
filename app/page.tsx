@@ -48,6 +48,7 @@ export default function HomePage() {
   };
 
   // Test change to verify Vercel deployment after repo made private - DEPLOY TEST 2024-01-15
+  // REPO NOW PUBLIC - This should deploy immediately!
   console.log('🚀 DEPLOY TEST: This should show "DEPLOY TEST 2024-01-15" if latest code is deployed');
   return (
     <div className="min-h-screen">
