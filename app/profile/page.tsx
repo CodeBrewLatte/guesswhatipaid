@@ -75,11 +75,11 @@ export default function ProfilePage() {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
-            const response = await fetch('/api/v1/users/profile', {
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-              },
-            });
+                const response = await fetch('/api/v1/users/profile-direct', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
             
             if (response.ok) {
               const profileData = await response.json();
@@ -192,7 +192,7 @@ export default function ProfilePage() {
       }
 
       // Update user profile with auth token
-      const response = await fetch('/api/v1/users/profile', {
+      const response = await fetch('/api/v1/users/profile-direct', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,

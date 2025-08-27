@@ -17,7 +17,7 @@ export default function HomePage() {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
-            const response = await fetch('/api/v1/users/profile', {
+            const response = await fetch('/api/v1/users/profile-direct', {
               headers: {
                 'Authorization': `Bearer ${session.access_token}`,
               },

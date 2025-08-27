@@ -61,7 +61,7 @@ export default function UploadPage() {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
-            const profileResponse = await fetch('/api/v1/users/profile', {
+            const profileResponse = await fetch('/api/v1/users/profile-direct', {
               headers: {
                 'Authorization': `Bearer ${session.access_token}`,
               },
@@ -124,7 +124,7 @@ export default function UploadPage() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.access_token) {
-          const profileResponse = await fetch('/api/v1/users/profile', {
+          const profileResponse = await fetch('/api/v1/users/profile-direct', {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
             },

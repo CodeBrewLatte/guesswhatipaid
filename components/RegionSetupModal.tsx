@@ -80,7 +80,7 @@ export function RegionSetupModal({ isOpen, onClose, onRegionSet }: RegionSetupMo
       }
 
       // Update user region - send as JSON for simple region updates
-      const response = await fetch('/api/v1/users/profile', {
+              const response = await fetch('/api/v1/users/profile-direct', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
