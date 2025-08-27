@@ -17,17 +17,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'DATABASE_URL not found' }, { status: 500 });
     }
     
-    // Create direct PostgreSQL client
+    // Create direct PostgreSQL client with SSL disabled
+    // Modify connection string to disable SSL verification
+    const modifiedUrl = databaseUrl.replace(
+      /sslmode=require/,
+      'sslmode=no-verify'
+    );
+    
     client = new Client({
-      connectionString: databaseUrl,
+      connectionString: modifiedUrl,
       // Add connection parameters to prevent prepared statement conflicts
       connectionTimeoutMillis: 10000,
       statement_timeout: 30000,
-      query_timeout: 30000,
-      // Disable SSL verification for Supabase
-      ssl: {
-        rejectUnauthorized: false
-      }
+      query_timeout: 30000
     });
     
     try {
