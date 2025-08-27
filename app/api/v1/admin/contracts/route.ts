@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       queryParams = [status];
     }
     
-    // Get contracts with status filter
+    // Get contracts with status filter - simplified query
     const contractsResult = await dbClient.query(`
       SELECT 
         c.id,
@@ -65,13 +65,10 @@ export async function GET(request: NextRequest) {
         c."createdAt",
         c."updatedAt",
         up."displayName",
-        up.email as userEmail,
-        ARRAY_AGG(ct.tag) FILTER (WHERE ct.tag IS NOT NULL) as tags
+        up.email as userEmail
       FROM "Contract" c
       LEFT JOIN "UserProfile" up ON c.uploaderEmail = up.email
-      LEFT JOIN "ContractTag" ct ON c.id = ct."contractId"
       ${whereClause}
-      GROUP BY c.id, up."displayName", up.email
       ORDER BY c."createdAt" DESC
     `, queryParams);
     
@@ -88,7 +85,7 @@ export async function GET(request: NextRequest) {
         email: row.userEmail || row.uploaderEmail,
         displayName: row.displayName
       },
-      tags: row.tags.map((tag: string) => ({ label: tag }))
+      tags: [] // Simplified - no tags for now
     }));
     
     console.log(`Found ${contracts.length} contracts with status: ${status}`);
