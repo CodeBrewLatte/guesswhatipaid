@@ -153,8 +153,8 @@ export async function POST(request: NextRequest) {
       for (const tag of tags) {
         if (tag.trim()) {
           await dbClient.query(
-            `INSERT INTO "ContractTag" ("id", "contractId", "tag", "createdAt", "updatedAt") 
-             VALUES (gen_random_uuid(), $1, $2, NOW(), NOW())`,
+            `INSERT INTO "ContractTag" ("id", "contractId", "tag", "createdAt") 
+             VALUES (gen_random_uuid(), $1, $2, NOW())`,
             [contractId, tag.trim()]
           );
         }
