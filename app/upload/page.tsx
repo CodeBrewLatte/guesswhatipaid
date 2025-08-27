@@ -149,7 +149,7 @@ export default function UploadPage() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('/api/v1/contracts', {
+      const response = await fetch('/api/v1/contracts-direct', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
