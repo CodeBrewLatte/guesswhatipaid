@@ -35,12 +35,12 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
         
         if (categoriesRes.ok) {
           const categoriesData = await categoriesRes.json()
-          setCategories(categoriesData)
+          setCategories(categoriesData.categories || [])
         }
         
         if (regionsRes.ok) {
           const regionsData = await regionsRes.json()
-          setRegions(regionsData)
+          setRegions(regionsData.regions || [])
         }
       } catch (error) {
         console.error('Error fetching form data:', error)

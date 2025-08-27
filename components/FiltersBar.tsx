@@ -30,12 +30,12 @@ export function FiltersBar({ filters, onFilterChange }: FiltersBarProps) {
         
         if (categoriesRes.ok) {
           const categoriesData = await categoriesRes.json()
-          setCategories(categoriesData)
+          setCategories(categoriesData.categories || [])
         }
         
         if (regionsRes.ok) {
           const regionsData = await regionsRes.json()
-          setRegions(regionsData)
+          setRegions(regionsData.regions || [])
         }
       } catch (error) {
         console.error('Error fetching filter data:', error)
