@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         `;
         console.log('UserProfile table exists, count:', userProfileCount);
       } catch (tableError) {
-        console.log('UserProfile table error:', tableError.message);
+        console.log('UserProfile table error:', tableError instanceof Error ? tableError.message : 'Unknown error');
       }
       
       // Try to check if there are any user profiles
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         `;
         console.log('Sample profiles:', profiles);
       } catch (profilesError) {
-        console.log('Profiles query error:', profilesError.message);
+        console.log('Profiles query error:', profilesError instanceof Error ? profilesError.message : 'Unknown error');
       }
       
       await prisma.$disconnect();
