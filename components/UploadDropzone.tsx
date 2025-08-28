@@ -65,9 +65,7 @@ export function UploadDropzone({ onFileUpload }: UploadDropzoneProps) {
           <p className="text-sm text-gray-500">
             Supports JPEG, PNG, HEIC files up to 10MB
           </p>
-          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
-            📱 <strong>Mobile Optimized:</strong> Works perfectly on phones!
-          </div>
+
         </div>
         )}
       </div>
@@ -81,7 +79,7 @@ export function UploadDropzone({ onFileUpload }: UploadDropzoneProps) {
       <div className="mt-4 text-sm text-gray-500">
         <p>• Accepted formats: JPEG, PNG, HEIC</p>
         <p>• Maximum file size: 10MB</p>
-        <p>• 📱 Take photos directly from your phone for best results</p>
+        <p>• 📱 Take photos directly from your phone</p>
         <p>• We'll help you redact personal information in the next step</p>
       </div>
     </div>

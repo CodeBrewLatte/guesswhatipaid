@@ -28,6 +28,7 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [zoom, setZoom] = useState(1)
+  const [redrawTimeout, setRedrawTimeout] = useState<NodeJS.Timeout | null>(null)
 
   // Determine file type and load file
   useEffect(() => {
@@ -281,6 +282,15 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     drawCanvas()
   }, [drawCanvas])
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (redrawTimeout) {
+        clearTimeout(redrawTimeout)
+      }
+    }
+  }, [redrawTimeout])
+
   const getMousePos = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (typeof window === 'undefined') return { x: 0, y: 0 }
     
@@ -307,22 +317,25 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     const canvas = canvasRef.current
     if (!canvas) return
 
-    // Clear canvas and redraw
-    drawCanvas()
-
-    // Draw preview rectangle
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    // Only redraw every few pixels to reduce flickering
     const width = pos.x - startPoint.x
     const height = pos.y - startPoint.y
-
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-    ctx.fillRect(startPoint.x, startPoint.y, width, height)
     
-    ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'
-    ctx.lineWidth = 2
-    ctx.strokeRect(startPoint.x, startPoint.y, width, height)
+    // Check if we've moved enough to warrant a redraw (every 3 pixels)
+    if (Math.abs(width) % 3 === 0 || Math.abs(height) % 3 === 0) {
+      drawCanvas()
+      
+      // Draw the preview rectangle on top
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+      ctx.fillRect(startPoint.x, startPoint.y, width, height)
+      
+      ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'
+      ctx.lineWidth = 2
+      ctx.strokeRect(startPoint.x, startPoint.y, width, height)
+    }
   }
 
   const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -366,22 +379,24 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     const canvas = canvasRef.current
     if (!canvas) return
 
-    // Clear canvas and redraw
-    drawCanvas()
-
-    // Draw preview rectangle
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
     const width = pos.x - startPoint.x
     const height = pos.y - startPoint.y
 
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-    ctx.fillRect(startPoint.x, startPoint.y, width, height)
-    
-    ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'
-    ctx.lineWidth = 2
-    ctx.strokeRect(startPoint.x, startPoint.y, width, height)
+    // Only redraw every few pixels to reduce flickering on touch
+    if (Math.abs(width) % 5 === 0 || Math.abs(height) % 5 === 0) {
+      drawCanvas()
+      
+      // Draw the preview rectangle on top
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+      ctx.fillRect(startPoint.x, startPoint.y, width, height)
+      
+      ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'
+      ctx.lineWidth = 2
+      ctx.strokeRect(startPoint.x, startPoint.y, width, height)
+    }
   }
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
