@@ -5,7 +5,7 @@ import { useAuth } from '../../src/contexts/AuthContext'
 import { supabase } from '../../src/utils/supabase'
 import Link from 'next/link'
 import { UploadDropzone } from '@/components/UploadDropzone'
-import { RedactionCanvas } from '@/components/RedactionCanvas'
+import { RedactionCanvasWrapper } from '@/components/RedactionCanvasWrapper'
 import { MetadataForm } from '@/components/MetadataForm'
 
 type UploadStep = 'upload' | 'redact' | 'metadata' | 'preview' | 'submitted'
@@ -321,7 +321,7 @@ export default function UploadPage() {
                 Draw rectangles over any personal information like names, addresses, 
                 account numbers, or other sensitive data.
               </p>
-              <RedactionCanvas 
+              <RedactionCanvasWrapper 
                 file={uploadData.file}
                 onComplete={handleRedactionComplete}
                 onBack={() => setCurrentStep('upload')}

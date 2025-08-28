@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { PDFDocument, PDFPage, PDFImage } from 'pdf-lib'
 
+
+
 interface RedactionBox {
   x: number
   y: number
