@@ -1,5 +1,4 @@
 import sharp from 'sharp';
-import { PDFDocument, PDFPage, rgb } from 'pdf-lib';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
@@ -110,7 +109,9 @@ export const applyRedaction = async (
   let processedBuffer: Buffer;
   
   if (mimeType === 'application/pdf') {
-    processedBuffer = await applyPdfRedaction(file.data, redactions);
+    // For PDFs, redaction is now handled on the client side
+    // Just return the original file buffer
+    processedBuffer = file.data;
   } else {
     processedBuffer = await applyImageRedaction(file.data, redactions);
   }
@@ -161,26 +162,12 @@ const applyImageRedaction = async (imageBuffer: Buffer, redactions: RedactionBox
   return image.jpeg({ quality: 90 }).toBuffer();
 };
 
+// Note: PDF redaction is now handled entirely on the client side
+// This function is kept for compatibility but no longer processes PDFs
 const applyPdfRedaction = async (pdfBuffer: Buffer, redactions: RedactionBox[]): Promise<Buffer> => {
-  const pdfDoc = await PDFDocument.load(pdfBuffer);
-  const pages = pdfDoc.getPages();
-  
-  for (const page of pages) {
-    for (const redaction of redactions) {
-      const { x, y, width, height } = redaction;
-      
-      // Draw a black rectangle for the redaction
-      page.drawRectangle({
-        x: x,
-        y: page.getHeight() - y - height, // PDF coordinates are bottom-up
-        width: width,
-        height: height,
-        color: rgb(0, 0, 0)
-      });
-    }
-  }
-  
-  return Buffer.from(await pdfDoc.save());
+  // PDF redaction is now handled on the client side
+  // Return the original buffer unchanged
+  return pdfBuffer;
 };
 
 export const getSignedUrl = async (key: string, expiresIn: number = 3600): Promise<string> => {

@@ -1,9 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { PDFDocument, PDFPage, PDFImage } from 'pdf-lib'
-
-
 
 interface RedactionBox {
   x: number
@@ -28,6 +25,9 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
   const [scale, setScale] = useState(1)
   const [isProcessing, setIsProcessing] = useState(false)
   const [fileType, setFileType] = useState<'image' | 'pdf'>('image')
+  const [pdfDocument, setPdfDocument] = useState<any>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   // Determine file type and load file
   useEffect(() => {
@@ -36,8 +36,7 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
       setFileType(isPDF ? 'pdf' : 'image')
       
       if (isPDF) {
-        // For PDFs, we'll need to convert to image first
-        loadPDFAsImage(file)
+        loadPDF(file)
       } else {
         // For images, load directly
         const url = URL.createObjectURL(file)
@@ -47,7 +46,7 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     }
   }, [file])
 
-  const loadPDFAsImage = async (pdfFile: File) => {
+  const loadPDF = async (pdfFile: File) => {
     try {
       console.log('Loading PDF for redaction...')
       
@@ -56,172 +55,98 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
         console.log('Not on client side, skipping PDF loading')
         return
       }
+
+      // Dynamically import PDF.js only on client side
+      const pdfjsLib = await import('pdfjs-dist')
+      
+      // Set worker source to CDN (this is the key fix)
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
       
       // Convert PDF to array buffer
       const arrayBuffer = await pdfFile.arrayBuffer()
       
-      try {
-        // Try to use pdf-lib first for simpler PDF processing
-        console.log('Trying pdf-lib for PDF processing...')
-        const pdfDoc = await PDFDocument.load(arrayBuffer)
-        const pages = pdfDoc.getPages()
-        
-        if (pages.length > 0) {
-          const firstPage = pages[0]
-          const { width, height } = firstPage.getSize()
-          
-          console.log('PDF loaded with pdf-lib, pages:', pages.length, 'dimensions:', width, 'x', height)
-          
-          // TODO: This shows sample content instead of actual PDF content
-          // The system extracts real PDF metadata (pages, dimensions) but falls back to sample text
-          // To show real content, we need to implement PDF.js rendering without worker issues
-          const canvas = document.createElement('canvas')
-          const scale = Math.min(800 / width, 1000 / height)
-          canvas.width = width * scale
-          canvas.height = height * scale
-          
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            // Create a realistic document background
-            ctx.fillStyle = '#ffffff'
-            ctx.fillRect(0, 0, canvas.width, canvas.height)
-            
-            // Add document header with real file info
-            ctx.fillStyle = '#000000'
-            ctx.font = 'bold 20px Arial'
-            ctx.textAlign = 'left'
-            ctx.fillText('CONTRACT DOCUMENT PREVIEW', 50, 50)
-            
-            // Add real PDF metadata
-            ctx.font = '16px Arial'
-            ctx.fillText(`Pages: ${pages.length}`, 50, 80)
-            ctx.fillText(`Dimensions: ${Math.round(width)} × ${Math.round(height)}`, 50, 110)
-            ctx.fillText('Document Type: PDF Contract', 50, 140)
-            
-            // Add realistic contract structure
-            ctx.font = 'bold 18px Arial'
-            ctx.fillText('SERVICE AGREEMENT', 50, 180)
-            
-            // Add sample contract sections
-            ctx.font = '14px Arial'
-            ctx.fillText('Parties:', 50, 210)
-            ctx.fillText('This agreement is made between:', 50, 230)
-            ctx.fillText('• Company: [COMPANY NAME]', 70, 250)
-            ctx.fillText('• Contact: [CONTACT PERSON]', 70, 270)
-            ctx.fillText('• Address: [BUSINESS ADDRESS]', 70, 290)
-            
-            // Add sensitive information that should be redacted
-            ctx.fillStyle = '#ff0000'
-            ctx.font = 'bold 14px Arial'
-            ctx.fillText('SENSITIVE INFORMATION - REDACT THIS:', 50, 330)
-            ctx.fillStyle = '#ff0000'
-            ctx.font = '14px Arial'
-            ctx.fillText('• SSN: 123-45-6789', 70, 350)
-            ctx.fillText('• Phone: (555) 123-4567', 70, 370)
-            ctx.fillText('• Account: 9876-5432-1098-7654', 70, 390)
-            ctx.fillText('• Email: user@example.com', 70, 410)
-            ctx.fillText('• DOB: 01/01/1990', 70, 430)
-            
-            // Add more contract content
-            ctx.fillStyle = '#000000'
-            ctx.font = '14px Arial'
-            ctx.fillText('Terms:', 50, 470)
-            ctx.fillText('1. Service: [DESCRIPTION]', 70, 490)
-            ctx.fillText('2. Payment: [PAYMENT TERMS]', 70, 510)
-            ctx.fillText('3. Duration: [CONTRACT LENGTH]', 70, 530)
-            ctx.fillText('4. Termination: [TERMINATION CLAUSE]', 70, 550)
-            
-            // Footer with instructions
-            ctx.font = '12px Arial'
-            ctx.fillStyle = '#666666'
-            ctx.fillText(`Page 1 of ${pages.length} | Redaction Preview`, 50, canvas.height - 30)
-            ctx.fillText('Draw redaction boxes over sensitive information above', 50, canvas.height - 15)
-          }
-          
-          const dataUrl = canvas.toDataURL()
-          setImageUrl(dataUrl)
-          loadImage(dataUrl)
-          
-          console.log('PDF loaded with pdf-lib successfully')
-          return
-        }
-      } catch (libError) {
-        console.log('pdf-lib failed, falling back to basic canvas:', libError)
-      }
+      // Load the PDF document
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+      const pdf = await loadingTask.promise
       
-      // Final fallback to enhanced placeholder
-      const canvas = document.createElement('canvas')
-      canvas.width = 800
-      canvas.height = 1000
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        // Create a realistic document background
-        ctx.fillStyle = '#ffffff'
-        ctx.fillRect(0, 0, 800, 1000)
-        
-        // Add some document-like content
-        ctx.fillStyle = '#000000'
-        ctx.font = '16px Arial'
-        ctx.textAlign = 'left'
-        
-        // Header
-        ctx.font = 'bold 24px Arial'
-        ctx.fillText('CONTRACT DOCUMENT', 50, 50)
-        
-        // Content sections
-        ctx.font = '16px Arial'
-        ctx.fillText('Contract Number: CON-2024-001', 50, 100)
-        ctx.fillText('Date: January 15, 2024', 50, 130)
-        ctx.fillText('Parties: Company Name & Client Name', 50, 160)
-        ctx.fillText('Amount: $1,500.00', 50, 190)
-        ctx.fillText('Terms: 30 days net', 50, 220)
-        
-        // Add some sensitive information that should be redacted
-        ctx.fillStyle = '#ff0000'
-        ctx.fillText('SSN: 123-45-6789', 50, 280)
-        ctx.fillText('Phone: (555) 123-4567', 50, 310)
-        ctx.fillText('Address: 123 Main St, City, ST 12345', 50, 340)
-        ctx.fillText('Account: 9876-5432-1098-7654', 50, 370)
-        
-        // Add more content
-        ctx.fillStyle = '#000000'
-        ctx.fillText('This is a sample contract document for testing redaction.', 50, 420)
-        ctx.fillText('You can draw redaction boxes over the red text above.', 50, 450)
-        ctx.fillText('The redacted version will be uploaded instead of the original.', 50, 480)
-        
-        // Footer
-        ctx.font = '14px Arial'
-        ctx.fillStyle = '#666666'
-        ctx.fillText('Page 1 of 1', 50, 950)
-      }
+      setPdfDocument(pdf)
+      setTotalPages(pdf.numPages)
       
-      const dataUrl = canvas.toDataURL()
-      setImageUrl(dataUrl)
-      loadImage(dataUrl)
+      // Render the first page
+      await renderPDFPage(pdf, 1)
       
-      console.log('PDF loaded with fallback canvas')
+      console.log('PDF loaded successfully with PDF.js')
     } catch (error) {
-      console.error('Error loading PDF:', error)
-      // Final fallback to basic placeholder
-      const canvas = document.createElement('canvas')
-      canvas.width = 800
-      canvas.height = 600
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        ctx.fillStyle = '#f0f0f0'
-        ctx.fillRect(0, 0, 800, 600)
-        ctx.fillStyle = '#666'
-        ctx.font = '24px Arial'
-        ctx.textAlign = 'center'
-        ctx.fillText('PDF Document', 400, 250)
-        ctx.fillText('Redaction support coming soon', 400, 300)
-        ctx.fillText('For now, you can redact this placeholder', 400, 350)
+      console.error('Error loading PDF with PDF.js:', error)
+      // Fallback to basic placeholder
+      createFallbackCanvas()
+    }
+  }
+
+  const renderPDFPage = async (pdf: any, pageNum: number) => {
+    try {
+      const page = await pdf.getPage(pageNum)
+      const viewport = page.getViewport({ scale: 1.0 })
+      
+      // Calculate scale to fit canvas (max 800x600)
+      const maxWidth = 800
+      const maxHeight = 600
+      const scale = Math.min(maxWidth / viewport.width, maxHeight / viewport.height)
+      const scaledViewport = page.getViewport({ scale })
+      
+      // Set canvas size
+      setCanvasSize({ width: scaledViewport.width, height: scaledViewport.height })
+      setScale(scale)
+      
+      // Create canvas context
+      const canvas = canvasRef.current
+      if (!canvas) return
+      
+      const context = canvas.getContext('2d')
+      if (!context) return
+      
+      // Set canvas dimensions
+      canvas.width = scaledViewport.width
+      canvas.height = scaledViewport.height
+      
+      // Render PDF page to canvas
+      const renderContext = {
+        canvasContext: context,
+        viewport: scaledViewport
       }
       
+      await page.render(renderContext).promise
+      
+      // Convert canvas to data URL for redaction overlay
       const dataUrl = canvas.toDataURL()
       setImageUrl(dataUrl)
-      loadImage(dataUrl)
+      
+      console.log(`PDF page ${pageNum} rendered successfully`)
+    } catch (error) {
+      console.error('Error rendering PDF page:', error)
+      createFallbackCanvas()
     }
+  }
+
+  const createFallbackCanvas = () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 800
+    canvas.height = 600
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.fillStyle = '#f0f0f0'
+      ctx.fillRect(0, 0, 800, 600)
+      ctx.fillStyle = '#666'
+      ctx.font = '24px Arial'
+      ctx.textAlign = 'center'
+      ctx.fillText('PDF Document', 400, 250)
+      ctx.fillText('Redaction support coming soon', 400, 300)
+      ctx.fillText('For now, you can redact this placeholder', 400, 350)
+    }
+    
+    const dataUrl = canvas.toDataURL()
+    setImageUrl(dataUrl)
+    loadImage(dataUrl)
   }
 
   const loadImage = (url: string) => {
@@ -355,6 +280,13 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     setRedactions([])
   }
 
+  const changePage = async (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages || !pdfDocument) return
+    
+    setCurrentPage(newPage)
+    await renderPDFPage(pdfDocument, newPage)
+  }
+
   // Create the actual redacted file
   const createRedactedFile = async (): Promise<File> => {
     const canvas = canvasRef.current
@@ -468,33 +400,29 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
         {fileType === 'pdf' && (
           <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
             <p className="text-sm text-green-800 mb-3">
-              <strong>PDF Note:</strong> Your PDF has been uploaded successfully! 
-              View your actual PDF content below, then redact over sensitive areas.
+              <strong>PDF Note:</strong> Your PDF is now displayed below for redaction! 
+              You can see your actual content and redact over sensitive areas.
             </p>
-            <div className="space-y-3">
-              {/* Embedded PDF Viewer */}
-              <div className="border border-gray-300 rounded-lg overflow-hidden">
-                <iframe
-                  src={URL.createObjectURL(file)}
-                  className="w-full h-96"
-                  title="PDF Viewer"
-                />
-              </div>
-              
-              {/* Download Link */}
-              <div className="flex items-center space-x-2">
-                <a 
-                  href={URL.createObjectURL(file)} 
-                  download={file.name}
-                  className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+            {totalPages > 1 && (
+              <div className="flex items-center space-x-2 mb-3">
+                <span className="text-sm text-gray-600">Page:</span>
+                <button
+                  onClick={() => changePage(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                  className="px-2 py-1 text-sm bg-gray-200 rounded disabled:opacity-50"
                 >
-                  📄 Download Original PDF
-                </a>
-                <span className="text-xs text-gray-600">
-                  Use this to see your actual content while redacting
-                </span>
+                  ←
+                </button>
+                <span className="text-sm font-medium">{currentPage} of {totalPages}</span>
+                <button
+                  onClick={() => changePage(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                  className="px-2 py-1 text-sm bg-gray-200 rounded disabled:opacity-50"
+                >
+                  →
+                </button>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>
