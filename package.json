@@ -53,6 +53,7 @@
     "@types/uuid": "^9.0.7",
     "autoprefixer": "^10.0.1",
     "concurrently": "^8.2.2",
+    "copy-webpack-plugin": "^13.0.1",
     "eslint": "^8",
     "eslint-config-next": "^14.2.25",
     "postcss": "^8",
