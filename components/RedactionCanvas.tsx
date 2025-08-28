@@ -112,11 +112,28 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     
     // Create iframe for PDF
     const iframe = document.createElement('iframe')
+    iframe.id = 'pdf-iframe' // Add an ID for easy removal
     iframe.src = URL.createObjectURL(pdfFile)
     iframe.style.width = '100%'
     iframe.style.height = '500px'
     iframe.style.border = 'none'
     iframe.style.backgroundColor = 'white'
+    
+    // Add error handling for iframe
+    iframe.onerror = () => {
+      console.error('PDF iframe failed to load, trying object tag fallback')
+      createObjectTagFallback(pdfFile, pdfViewer)
+    }
+    iframe.onload = () => console.log('PDF iframe loaded successfully')
+    
+    // Add timeout to detect if iframe fails silently
+    setTimeout(() => {
+      if (iframe.contentDocument && iframe.contentDocument.body.innerHTML === '') {
+        console.log('Iframe appears empty, trying object tag fallback')
+        createObjectTagFallback(pdfFile, pdfViewer)
+      }
+    }, 3000)
+    
     pdfViewer.appendChild(iframe)
     
     // Add instructions below
@@ -140,6 +157,18 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     if (canvasElement && canvasElement.parentNode) {
       canvasElement.parentNode.insertBefore(pdfViewer, canvasElement.nextSibling)
     }
+  }
+
+  const createObjectTagFallback = (pdfFile: File, pdfViewer: HTMLElement) => {
+    console.log('Using object tag fallback for PDF loading...')
+    const objectTag = document.createElement('object')
+    objectTag.data = URL.createObjectURL(pdfFile)
+    objectTag.type = 'application/pdf'
+    objectTag.style.width = '100%'
+    objectTag.style.height = '500px'
+    objectTag.style.border = 'none'
+    objectTag.style.backgroundColor = 'white'
+    pdfViewer.appendChild(objectTag)
   }
 
   const createBasicPDFPreview = (pdfFile: File) => {
