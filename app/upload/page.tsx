@@ -88,8 +88,12 @@ export default function UploadPage() {
     setError('')
   }
 
-  const handleRedactionComplete = (redactions: RedactionBox[]) => {
-    setUploadData(prev => ({ ...prev, redactions }))
+  const handleRedactionComplete = (redactedFile: File, redactions: RedactionBox[]) => {
+    setUploadData(prev => ({ 
+      ...prev, 
+      file: redactedFile, // Use the redacted file instead of original
+      redactions 
+    }))
     setCurrentStep('metadata')
   }
 

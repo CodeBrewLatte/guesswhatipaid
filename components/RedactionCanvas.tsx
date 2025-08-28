@@ -11,7 +11,7 @@ interface RedactionBox {
 
 interface RedactionCanvasProps {
   file: File
-  onComplete: (redactions: RedactionBox[]) => void
+  onComplete: (redactedFile: File, redactions: RedactionBox[]) => void
   onBack: () => void
 }
 
@@ -23,32 +23,73 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
   const [imageUrl, setImageUrl] = useState<string>('')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [scale, setScale] = useState(1)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [fileType, setFileType] = useState<'image' | 'pdf'>('image')
 
-  // Load image when file changes
+  // Determine file type and load file
   useEffect(() => {
     if (file) {
-      const url = URL.createObjectURL(file)
-      setImageUrl(url)
+      const isPDF = file.type === 'application/pdf'
+      setFileType(isPDF ? 'pdf' : 'image')
       
-      const img = new Image()
-      img.onload = () => {
-        // Calculate canvas size to fit the image (max 800x600)
-        const maxWidth = 800
-        const maxHeight = 600
-        const ratio = Math.min(maxWidth / img.width, maxHeight / img.height)
-        
-        const canvasWidth = img.width * ratio
-        const canvasHeight = img.height * ratio
-        
-        setCanvasSize({ width: canvasWidth, height: canvasHeight })
-        setScale(ratio)
-        
-        // Clean up URL when component unmounts
-        return () => URL.revokeObjectURL(url)
+      if (isPDF) {
+        // For PDFs, we'll need to convert to image first
+        loadPDFAsImage(file)
+      } else {
+        // For images, load directly
+        const url = URL.createObjectURL(file)
+        setImageUrl(url)
+        loadImage(url)
       }
-      img.src = url
     }
   }, [file])
+
+  const loadPDFAsImage = async (pdfFile: File) => {
+    try {
+      // For now, we'll show a message that PDF redaction is coming soon
+      // In production, you'd want to use pdf-lib or similar
+      console.log('PDF redaction support coming soon - converting to image for now')
+      
+      // Create a simple placeholder image for PDFs
+      const canvas = document.createElement('canvas')
+      canvas.width = 800
+      canvas.height = 600
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.fillStyle = '#f0f0f0'
+        ctx.fillRect(0, 0, 800, 600)
+        ctx.fillStyle = '#666'
+        ctx.font = '24px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText('PDF Document', 400, 250)
+        ctx.fillText('Redaction support coming soon', 400, 300)
+        ctx.fillText('For now, you can redact this placeholder', 400, 350)
+      }
+      
+      const dataUrl = canvas.toDataURL()
+      setImageUrl(dataUrl)
+      loadImage(dataUrl)
+    } catch (error) {
+      console.error('Error loading PDF:', error)
+    }
+  }
+
+  const loadImage = (url: string) => {
+    const img = new Image()
+    img.onload = () => {
+      // Calculate canvas size to fit the image (max 800x600)
+      const maxWidth = 800
+      const maxHeight = 600
+      const ratio = Math.min(maxWidth / img.width, maxHeight / img.height)
+      
+      const canvasWidth = img.width * ratio
+      const canvasHeight = img.height * ratio
+      
+      setCanvasSize({ width: canvasWidth, height: canvasHeight })
+      setScale(ratio)
+    }
+    img.src = url
+  }
 
   // Draw canvas content
   const drawCanvas = useCallback(() => {
@@ -158,23 +199,99 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     setRedactions([])
   }
 
-  const handleComplete = () => {
-    // Convert canvas coordinates back to original image coordinates
-    const scaledRedactions = redactions.map(redaction => ({
-      x: redaction.x / scale,
-      y: redaction.y / scale,
-      width: redaction.width / scale,
-      height: redaction.height / scale
-    }))
+  // Create the actual redacted file
+  const createRedactedFile = async (): Promise<File> => {
+    const canvas = canvasRef.current
+    if (!canvas) throw new Error('Canvas not available')
+
+    // Create a new canvas with original image dimensions
+    const redactedCanvas = document.createElement('canvas')
+    const ctx = redactedCanvas.getContext('2d')
+    if (!ctx) throw new Error('Could not get canvas context')
+
+    // Load original image to get dimensions
+    const img = new Image()
     
-    onComplete(scaledRedactions)
+    return new Promise((resolve, reject) => {
+      img.onload = () => {
+        // Set canvas to original image size
+        redactedCanvas.width = img.width
+        redactedCanvas.height = img.height
+        
+        // Draw original image
+        ctx.drawImage(img, 0, 0)
+        
+        // Apply redactions at original scale
+        redactions.forEach(redaction => {
+          const scaledRedaction = {
+            x: redaction.x / scale,
+            y: redaction.y / scale,
+            width: redaction.width / scale,
+            height: redaction.height / scale
+          }
+          
+          // Draw black box over sensitive area
+          ctx.fillStyle = '#000000'
+          ctx.fillRect(scaledRedaction.x, scaledRedaction.y, scaledRedaction.width, scaledRedaction.height)
+        })
+        
+        // Convert to blob and then to file
+        redactedCanvas.toBlob((blob) => {
+          if (blob) {
+            const redactedFile = new File([blob], `redacted_${file.name}`, {
+              type: file.type,
+              lastModified: Date.now()
+            })
+            resolve(redactedFile)
+          } else {
+            reject(new Error('Failed to create blob'))
+          }
+        }, file.type === 'application/pdf' ? 'application/pdf' : 'image/png')
+      }
+      
+      img.onerror = () => reject(new Error('Failed to load image'))
+      img.src = imageUrl
+    })
+  }
+
+  const handleComplete = async () => {
+    if (redactions.length === 0) {
+      // No redactions, just pass through the original file
+      console.log('No redactions applied - using original file')
+      onComplete(file, [])
+      return
+    }
+
+    setIsProcessing(true)
+    try {
+      console.log(`Creating redacted file with ${redactions.length} redaction boxes...`)
+      const redactedFile = await createRedactedFile()
+      
+      console.log('Redacted file created successfully:', redactedFile.name, redactedFile.size)
+      
+      // Convert canvas coordinates back to original image coordinates
+      const scaledRedactions = redactions.map(redaction => ({
+        x: redaction.x / scale,
+        y: redaction.y / scale,
+        width: redaction.width / scale,
+        height: redaction.height / scale
+      }))
+      
+      console.log('Scaled redactions:', scaledRedactions)
+      onComplete(redactedFile, scaledRedactions)
+    } catch (error) {
+      console.error('Error creating redacted file:', error)
+      alert(`Error creating redacted file: ${error.message}. Please try again.`)
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   if (!imageUrl) {
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading image...</p>
+        <p className="mt-2 text-gray-600">Loading {fileType === 'pdf' ? 'PDF' : 'image'}...</p>
       </div>
     )
   }
@@ -189,6 +306,7 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
           <li>• Redact names, addresses, phone numbers, account numbers, etc.</li>
           <li>• You can remove redactions by clicking the X button below</li>
           <li>• When finished, click "Continue" to proceed</li>
+          <li>• <strong>Only the redacted file will be uploaded to protect your privacy</strong></li>
         </ul>
       </div>
 
@@ -239,6 +357,7 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
         <button
           onClick={onBack}
           className="btn-secondary"
+          disabled={isProcessing}
         >
           ← Back
         </button>
@@ -248,6 +367,7 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
             <button
               onClick={clearAllRedactions}
               className="btn-secondary"
+              disabled={isProcessing}
             >
               Clear All
             </button>
@@ -255,8 +375,16 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
           <button
             onClick={handleComplete}
             className="btn-primary"
+            disabled={isProcessing}
           >
-            Continue →
+            {isProcessing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Processing...
+              </>
+            ) : (
+              'Continue →'
+            )}
           </button>
         </div>
       </div>

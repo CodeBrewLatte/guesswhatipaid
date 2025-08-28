@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
     const takenOn = formData.get('takenOn') as string;
     const region = formData.get('region') as string;
     const tags = formData.getAll('tags[]') as string[];
+    const dealRating = formData.get('dealRating') as string;
 
     // Validate required fields
     if (!file || !category || !priceCents || !region) {
@@ -127,9 +128,9 @@ export async function POST(request: NextRequest) {
       `INSERT INTO "Contract" (
         "id", "title", "description", "priceCents", "unit", "quantity", 
         "category", "region", "thumbKey", "vendorName", "takenOn", 
-        "uploaderEmail", "status", "createdAt", "updatedAt"
+        "uploaderEmail", "status", "dealRating", "createdAt", "updatedAt"
       ) VALUES (
-        gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'PENDING', NOW(), NOW()
+        gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'PENDING', $12, NOW(), NOW()
       ) RETURNING id`,
       [
         description || 'Contract Upload',
@@ -142,7 +143,8 @@ export async function POST(request: NextRequest) {
         urlData.publicUrl,
         vendorName || null,
         takenOn ? new Date(takenOn) : null,
-        user.email
+        user.email,
+        dealRating ? parseInt(dealRating) : null
       ]
     );
 
@@ -158,6 +160,29 @@ export async function POST(request: NextRequest) {
             [contractId, tag.trim()]
           );
         }
+      }
+    }
+
+    // Store redaction metadata if redactions were applied
+    if (redactions && redactions.length > 0) {
+      try {
+        await dbClient.query(
+          `INSERT INTO "RedactionMetadata" (
+            "id", "contractId", "redactionData", "originalFileName", "redactedFileName", "createdAt"
+          ) VALUES (
+            gen_random_uuid(), $1, $2, $3, $4, NOW()
+          )`,
+          [
+            contractId,
+            JSON.stringify(redactions),
+            file.name.replace('redacted_', ''), // Original filename
+            file.name // Redacted filename
+          ]
+        )
+        console.log('Redaction metadata stored successfully')
+      } catch (error) {
+        console.error('Error storing redaction metadata:', error)
+        // Don't fail the upload if redaction metadata storage fails
       }
     }
 
