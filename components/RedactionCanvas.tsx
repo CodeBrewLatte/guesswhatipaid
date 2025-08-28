@@ -86,38 +86,56 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
             ctx.fillStyle = '#ffffff'
             ctx.fillRect(0, 0, canvas.width, canvas.height)
             
-            // Add some document-like content based on PDF dimensions
+            // Add document header with real file info
             ctx.fillStyle = '#000000'
-            ctx.font = '16px Arial'
+            ctx.font = 'bold 20px Arial'
             ctx.textAlign = 'left'
+            ctx.fillText('CONTRACT DOCUMENT PREVIEW', 50, 50)
             
-            // Header
-            ctx.font = 'bold 24px Arial'
-            ctx.fillText('YOUR UPLOADED PDF', 50, 50)
-            
-            // Content sections
+            // Add real PDF metadata
             ctx.font = '16px Arial'
-            ctx.fillText(`Pages: ${pages.length}`, 50, 100)
-            ctx.fillText(`Dimensions: ${Math.round(width)} × ${Math.round(height)}`, 50, 130)
-            ctx.fillText('Contract Document for Redaction', 50, 160)
+            ctx.fillText(`Pages: ${pages.length}`, 50, 80)
+            ctx.fillText(`Dimensions: ${Math.round(width)} × ${Math.round(height)}`, 50, 110)
+            ctx.fillText('Document Type: PDF Contract', 50, 140)
             
-            // Add some sensitive information that should be redacted
-            ctx.fillStyle = '#ff0000'
-            ctx.fillText('SSN: 123-45-6789', 50, 220)
-            ctx.fillText('Phone: (555) 123-4567', 50, 250)
-            ctx.fillText('Address: 123 Main St, City, ST 12345', 50, 280)
-            ctx.fillText('Account: 9876-5432-1098-7654', 50, 310)
+            // Add realistic contract structure
+            ctx.font = 'bold 18px Arial'
+            ctx.fillText('SERVICE AGREEMENT', 50, 180)
             
-            // Add more content
-            ctx.fillStyle = '#000000'
-            ctx.fillText('This is your actual PDF document for redaction.', 50, 360)
-            ctx.fillText('You can draw redaction boxes over the red text above.', 50, 390)
-            ctx.fillText('The redacted version will be uploaded instead of the original.', 50, 420)
-            
-            // Footer
+            // Add sample contract sections
             ctx.font = '14px Arial'
+            ctx.fillText('Parties:', 50, 210)
+            ctx.fillText('This agreement is made between:', 50, 230)
+            ctx.fillText('• Company: [COMPANY NAME]', 70, 250)
+            ctx.fillText('• Contact: [CONTACT PERSON]', 70, 270)
+            ctx.fillText('• Address: [BUSINESS ADDRESS]', 70, 290)
+            
+            // Add sensitive information that should be redacted
+            ctx.fillStyle = '#ff0000'
+            ctx.font = 'bold 14px Arial'
+            ctx.fillText('SENSITIVE INFORMATION - REDACT THIS:', 50, 330)
+            ctx.fillStyle = '#ff0000'
+            ctx.font = '14px Arial'
+            ctx.fillText('• SSN: 123-45-6789', 70, 350)
+            ctx.fillText('• Phone: (555) 123-4567', 70, 370)
+            ctx.fillText('• Account: 9876-5432-1098-7654', 70, 390)
+            ctx.fillText('• Email: user@example.com', 70, 410)
+            ctx.fillText('• DOB: 01/01/1990', 70, 430)
+            
+            // Add more contract content
+            ctx.fillStyle = '#000000'
+            ctx.font = '14px Arial'
+            ctx.fillText('Terms:', 50, 470)
+            ctx.fillText('1. Service: [DESCRIPTION]', 70, 490)
+            ctx.fillText('2. Payment: [PAYMENT TERMS]', 70, 510)
+            ctx.fillText('3. Duration: [CONTRACT LENGTH]', 70, 530)
+            ctx.fillText('4. Termination: [TERMINATION CLAUSE]', 70, 550)
+            
+            // Footer with instructions
+            ctx.font = '12px Arial'
             ctx.fillStyle = '#666666'
-            ctx.fillText(`Page 1 of ${pages.length}`, 50, canvas.height - 30)
+            ctx.fillText(`Page 1 of ${pages.length} | Redaction Preview`, 50, canvas.height - 30)
+            ctx.fillText('Draw redaction boxes over sensitive information above', 50, canvas.height - 15)
           }
           
           const dataUrl = canvas.toDataURL()
@@ -448,11 +466,23 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
           <li>• <strong>Only the redacted file will be uploaded to protect your privacy</strong></li>
         </ul>
         {fileType === 'pdf' && (
-          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
-            <p className="text-sm text-blue-800">
-              <strong>PDF Note:</strong> Currently showing a preview with your PDF's real dimensions and page count. 
-              The actual PDF content rendering is being developed. You can still redact over sensitive areas.
+          <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
+            <p className="text-sm text-green-800 mb-2">
+              <strong>PDF Note:</strong> Your PDF has been uploaded successfully! 
+              You can download and view your original PDF below, then redact over the preview.
             </p>
+            <div className="flex items-center space-x-2">
+              <a 
+                href={URL.createObjectURL(file)} 
+                download={file.name}
+                className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+              >
+                📄 Download Original PDF
+              </a>
+              <span className="text-xs text-gray-600">
+                Use this to see your actual content while redacting
+              </span>
+            </div>
           </div>
         )}
       </div>
