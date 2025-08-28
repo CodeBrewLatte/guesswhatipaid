@@ -59,24 +59,17 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
       // Dynamically import PDF.js only on client side
       const pdfjsLib = await import('pdfjs-dist')
       
-      // Set worker source to CDN (this is the key fix)
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/build/pdf.worker.min.js`
+      // For PDF.js v5+, we need to use local worker files or disable workers
+      // Since CDN workers aren't available for ES modules, we'll disable workers
+      console.log('Using PDF.js without workers for compatibility')
+      pdfjsLib.GlobalWorkerOptions.workerSrc = ''
       
       // Convert PDF to array buffer
       const arrayBuffer = await pdfFile.arrayBuffer()
       
-      // Load the PDF document with timeout and fallback
-      let pdf
-      try {
-        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
-        pdf = await loadingTask.promise
-      } catch (pdfError) {
-        console.log('PDF loading failed, trying alternative approach:', pdfError)
-        // Try without worker
-        pdfjsLib.GlobalWorkerOptions.workerSrc = ''
-        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
-        pdf = await loadingTask.promise
-      }
+      // Load the PDF document
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+      const pdf = await loadingTask.promise
       
       setPdfDocument(pdf)
       setTotalPages(pdf.numPages)
