@@ -261,6 +261,123 @@ DATABASE_URL=your_supabase_postgres_connection_string
 - **Browse Page**: Filters and search functionality
 - **Region Setup**: User region configuration
 
+## **PDF Rendering Challenges & Solutions**
+
+### **1. The Core Problem**
+- **User Expectation**: Users expect to see their actual uploaded PDF content for redaction
+- **Technical Reality**: PDF rendering in Next.js is extremely challenging due to SSR, worker, and CORS issues
+- **Impact**: Redaction tool shows sample content instead of real PDF content, causing user frustration
+
+### **2. Attempted Solutions (All Failed)**
+
+#### **Solution A: PDF.js Library**
+- **Approach**: Use `pdfjs-dist` to render PDFs to canvas
+- **Problems Encountered**:
+  - `DOMMatrix is not defined` during Next.js SSR
+  - Worker loading failures (`No 'GlobalWorkerOptions.workerSrc' specified`)
+  - CORS errors with external CDN workers
+  - Persistent worker configuration issues
+- **Result**: Complete failure due to Next.js environment constraints
+
+#### **Solution B: pdf-lib + Canvas Generation**
+- **Approach**: Extract PDF metadata and generate realistic sample content
+- **Problems Encountered**:
+  - Only extracts metadata (pages, dimensions), not visual content
+  - Users see sample text instead of their actual PDF
+  - Repeated user complaints: "This is NOT my PDF"
+- **Result**: Functional but misleading - users can't see their real content
+
+#### **Solution C: Server-Side PDF Conversion**
+- **Approach**: Convert PDFs to images on the server using `sharp` or similar
+- **Problems Encountered**:
+  - `OffscreenCanvas` not available in Node.js environment
+  - Complex server-side image processing
+  - Additional API complexity and potential failures
+- **Result**: Abandoned due to Node.js canvas limitations
+
+#### **Solution D: iframe PDF Embedding**
+- **Approach**: Embed PDF directly in iframe for viewing
+- **Problems Encountered**:
+  - Browser PDF viewer limitations
+  - No redaction overlay capability
+  - Separate viewing vs. redaction workflow
+- **Result**: Shows real content but breaks redaction workflow
+
+### **3. Key Technical Learnings**
+
+#### **Next.js + PDF Rendering = Major Challenge**
+- **SSR Issues**: PDF libraries expect browser environment, not server
+- **Worker Dependencies**: PDF.js requires web workers that conflict with Next.js
+- **CORS Problems**: External worker CDNs fail in production environments
+- **Canvas Limitations**: Server-side canvas operations are severely limited
+
+#### **User Experience vs. Technical Reality**
+- **User Need**: See actual PDF content for accurate redaction
+- **Technical Constraint**: PDF rendering in Next.js is extremely difficult
+- **Trade-off**: Either show sample content (misleading) or show nothing (useless)
+
+#### **The Fundamental Mismatch**
+- **Redaction Tool Requirement**: Must show actual document content
+- **Next.js Architecture**: Server-side rendering conflicts with PDF libraries
+- **Browser Limitations**: PDF rendering requires specific browser APIs
+
+### **4. Recommended Solutions for Future Development**
+
+#### **Option 1: Client-Only PDF Rendering**
+```typescript
+// Use Next.js dynamic imports with ssr: false
+const PDFViewer = dynamic(() => import('./PDFViewer'), { ssr: false })
+
+// Completely isolate PDF rendering to client side
+// Avoid all server-side PDF processing
+```
+
+#### **Option 2: External PDF Service**
+- **Approach**: Use service like PDFTron, PSPDFKit, or similar
+- **Pros**: Professional PDF rendering, no Next.js conflicts
+- **Cons**: Additional cost, external dependency, potential privacy concerns
+
+#### **Option 3: Hybrid Approach**
+- **PDF Viewing**: Use iframe for content display
+- **Redaction Interface**: Overlay redaction tools on top
+- **Workflow**: View PDF → Identify areas → Redact on overlay → Submit
+
+#### **Option 4: Architecture Change**
+- **Consider**: Moving PDF processing to a separate microservice
+- **Technology**: Node.js + Express + PDF libraries
+- **Integration**: API calls to PDF service from Next.js
+
+### **5. Critical Decision Points**
+
+#### **For Redaction Tool Success**
+1. **Accept Technical Limitations**: PDF rendering in Next.js is fundamentally difficult
+2. **Choose User Experience**: Either show real content or don't build the tool
+3. **Consider Alternatives**: External services, different architectures, or different tools
+4. **Set Realistic Expectations**: This is not a simple feature to implement
+
+#### **Current State Assessment**
+- **What Works**: PDF upload, metadata extraction, sample content generation
+- **What Doesn't Work**: Showing actual PDF content for redaction
+- **User Impact**: High frustration due to misleading sample content
+- **Technical Debt**: Multiple failed attempts at PDF rendering
+
+### **6. Lessons for Future Developers**
+
+#### **Don't Underestimate PDF Complexity**
+- **PDF Rendering**: Is not a simple "add library" task
+- **Next.js Constraints**: Server-side rendering creates unique challenges
+- **User Expectations**: Users expect to see their actual content, not samples
+
+#### **Test Early and Often**
+- **Proof of Concept**: Test PDF rendering before building full features
+- **Environment Testing**: Test in production-like environments (Vercel)
+- **User Testing**: Validate that users can actually use the tool as intended
+
+#### **Consider Alternatives Early**
+- **External Services**: Professional PDF libraries often worth the cost
+- **Architecture Changes**: Sometimes the right solution requires different architecture
+- **Feature Scope**: Maybe redaction isn't the right feature for this tech stack
+
 ## **Future Improvements**
 
 ### **1. Database Layer**
@@ -278,6 +395,53 @@ DATABASE_URL=your_supabase_postgres_connection_string
 - **Error Tracking**: Centralized error reporting
 - **Metrics**: Business and technical metrics collection
 
+### **4. PDF Rendering (Critical Priority)**
+- **Research Phase**: Investigate external PDF services and costs
+- **Architecture Review**: Consider if current stack supports PDF requirements
+- **User Research**: Validate if redaction tool is actually needed
+- **Alternative Solutions**: Explore different approaches to document privacy
+
+## **Troubleshooting Session Summary (December 2024)**
+
+### **Session Context**
+- **User Request**: Implement PDF redaction tool showing actual uploaded content
+- **Duration**: Extended troubleshooting session with multiple failed attempts
+- **Outcome**: User frustration due to persistent sample content display
+- **Final Status**: Chat terminated due to technical limitations
+
+### **Key User Feedback**
+- **Repeated Complaint**: "This is NOT the PDF I uploaded"
+- **User Expectation**: See actual PDF content for redaction
+- **Technical Reality**: Only sample content could be displayed
+- **User Frustration**: "You got stuck" and "We're stuck unfortunately"
+
+### **Technical Challenges Encountered**
+1. **PDF.js Worker Issues**: Persistent CORS and worker loading failures
+2. **Next.js SSR Conflicts**: `DOMMatrix is not defined` errors
+3. **Canvas Limitations**: Server-side canvas operations not viable
+4. **Architecture Mismatch**: PDF rendering requirements vs. Next.js constraints
+
+### **Failed Solution Attempts**
+1. **Multiple PDF.js Configurations**: All failed due to worker issues
+2. **Server-side PDF Conversion**: Node.js canvas limitations
+3. **Hybrid Approaches**: Complex and unreliable
+4. **Sample Content Generation**: Misleading to users
+
+### **Critical Learning**
+- **PDF Rendering in Next.js**: Is fundamentally difficult, not a simple feature
+- **User Experience**: Cannot be compromised with sample content
+- **Technical Debt**: Multiple failed attempts create frustration
+- **Architecture Decision**: Sometimes requires different technology choices
+
+### **Recommendations for Future Sessions**
+1. **Set Realistic Expectations**: PDF rendering is complex, not simple
+2. **Research External Services**: Professional PDF libraries may be necessary
+3. **Consider Architecture Changes**: Current stack may not support requirements
+4. **User Validation**: Ensure redaction tool is actually needed
+5. **Alternative Solutions**: Explore different approaches to document privacy
+
 ---
 
 **Note**: This documentation should be updated whenever significant architectural changes are made. Keep it current to ensure quick onboarding and troubleshooting.
+
+**Special Note**: The PDF redaction tool represents a significant technical challenge that requires careful consideration of architecture, external services, or alternative approaches. Do not underestimate the complexity of PDF rendering in Next.js environments.

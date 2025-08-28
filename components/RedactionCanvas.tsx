@@ -467,21 +467,33 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
         </ul>
         {fileType === 'pdf' && (
           <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
-            <p className="text-sm text-green-800 mb-2">
+            <p className="text-sm text-green-800 mb-3">
               <strong>PDF Note:</strong> Your PDF has been uploaded successfully! 
-              You can download and view your original PDF below, then redact over the preview.
+              View your actual PDF content below, then redact over sensitive areas.
             </p>
-            <div className="flex items-center space-x-2">
-              <a 
-                href={URL.createObjectURL(file)} 
-                download={file.name}
-                className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
-              >
-                📄 Download Original PDF
-              </a>
-              <span className="text-xs text-gray-600">
-                Use this to see your actual content while redacting
-              </span>
+            <div className="space-y-3">
+              {/* Embedded PDF Viewer */}
+              <div className="border border-gray-300 rounded-lg overflow-hidden">
+                <iframe
+                  src={URL.createObjectURL(file)}
+                  className="w-full h-96"
+                  title="PDF Viewer"
+                />
+              </div>
+              
+              {/* Download Link */}
+              <div className="flex items-center space-x-2">
+                <a 
+                  href={URL.createObjectURL(file)} 
+                  download={file.name}
+                  className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                >
+                  📄 Download Original PDF
+                </a>
+                <span className="text-xs text-gray-600">
+                  Use this to see your actual content while redacting
+                </span>
+              </div>
             </div>
           </div>
         )}
