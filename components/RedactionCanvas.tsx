@@ -62,12 +62,15 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
       
       try {
         // Dynamically import PDF.js only on client side
+        console.log('Importing PDF.js...')
         const pdfjsLib = await import('pdfjs-dist')
+        console.log('PDF.js imported successfully, version:', pdfjsLib.version)
         
-        // Set up PDF.js worker
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+        // Set up PDF.js worker - disable worker for now to avoid CDN issues
+        // pdfjsLib.GlobalWorkerOptions.workerSrc = false
         
         // Load PDF with PDF.js
+        console.log('Loading PDF document...')
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
         console.log('PDF loaded successfully, pages:', pdf.numPages)
         
