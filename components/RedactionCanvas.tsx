@@ -18,8 +18,12 @@ interface RedactionCanvasProps {
 export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [redactions, setRedactions] = useState<RedactionBox[]>([])
-  const [isDrawing, setIsDrawing] = useState(false)
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null)
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [isMoving, setIsMoving] = useState(false)
+  const [movingBoxIndex, setMovingBoxIndex] = useState<number | null>(null)
+  const [moveOffset, setMoveOffset] = useState<{ x: number; y: number } | null>(null)
+  const [hoveredBoxIndex, setHoveredBoxIndex] = useState<number | null>(null)
   const [imageUrl, setImageUrl] = useState<string>('')
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   const [scale, setScale] = useState(1)
@@ -264,14 +268,26 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
       ctx.drawImage(img, 0, 0, canvasSize.width, canvasSize.height)
       
       // Draw existing redactions
-      redactions.forEach(redaction => {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
+      redactions.forEach((redaction, index) => {
+        // Check if this box is being moved or hovered
+        const isActive = index === movingBoxIndex || index === hoveredBoxIndex
+        
+        // Use different colors for active boxes
+        ctx.fillStyle = isActive ? 'rgba(0, 0, 0, 0.9)' : 'rgba(0, 0, 0, 0.8)'
         ctx.fillRect(redaction.x, redaction.y, redaction.width, redaction.height)
         
-        // Draw border
-        ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'
-        ctx.lineWidth = 2
+        // Draw border with different styles for active boxes
+        ctx.strokeStyle = isActive ? 'rgba(255, 255, 0, 1)' : 'rgba(255, 0, 0, 0.8)'
+        ctx.lineWidth = isActive ? 3 : 2
         ctx.strokeRect(redaction.x, redaction.y, redaction.width, redaction.height)
+        
+        // Add move indicator for active boxes
+        if (isActive) {
+          ctx.fillStyle = 'rgba(255, 255, 0, 0.8)'
+          ctx.font = '12px Arial'
+          ctx.textAlign = 'center'
+          ctx.fillText('↕', redaction.x + redaction.width / 2, redaction.y + redaction.height / 2)
+        }
       })
     }
     img.src = imageUrl
@@ -306,19 +322,68 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const pos = getMousePos(e)
+    
+    // Check if clicking on existing redaction box
+    const clickedBoxIndex = redactions.findIndex(redaction => 
+      pos.x >= redaction.x && pos.x <= redaction.x + redaction.width &&
+      pos.y >= redaction.y && pos.y <= redaction.y + redaction.height
+    )
+    
+    if (clickedBoxIndex !== -1) {
+      // Start moving existing box
+      setIsMoving(true)
+      setMovingBoxIndex(clickedBoxIndex)
+      setMoveOffset({
+        x: pos.x - redactions[clickedBoxIndex].x,
+        y: pos.y - redactions[clickedBoxIndex].y
+      })
+      return
+    }
+    
+    // Start drawing new redaction
     setIsDrawing(true)
     setStartPoint(pos)
   }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const pos = getMousePos(e)
+    
+    // Handle moving existing box
+    if (isMoving && movingBoxIndex !== null && moveOffset) {
+      const newX = pos.x - moveOffset.x
+      const newY = pos.y - moveOffset.y
+      
+      // Update the box position
+      setRedactions(prev => prev.map((redaction, index) => 
+        index === movingBoxIndex 
+          ? { ...redaction, x: newX, y: newY }
+          : redaction
+      ))
+      
+      // Redraw canvas with new positions
+      drawCanvas()
+      return
+    }
+    
+    // Handle drawing new redaction
     if (!isDrawing || !startPoint) return
 
-    const pos = getMousePos(e)
     const canvas = canvasRef.current
     if (!canvas) return
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+
+    // Check for hover over existing boxes
+    const hoveredIndex = redactions.findIndex(redaction => 
+      pos.x >= redaction.x && pos.x <= redaction.x + redaction.width &&
+      pos.y >= redaction.y && pos.y <= redaction.y + redaction.height
+    )
+    
+    if (hoveredIndex !== hoveredBoxIndex) {
+      setHoveredBoxIndex(hoveredIndex !== -1 ? hoveredIndex : null)
+      drawCanvas() // Redraw to show hover effects
+    }
 
     // Only redraw every few pixels to reduce flickering
     const width = pos.x - startPoint.x
@@ -339,6 +404,15 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
   }
 
   const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    // Handle finishing moving a box
+    if (isMoving) {
+      setIsMoving(false)
+      setMovingBoxIndex(null)
+      setMoveOffset(null)
+      return
+    }
+    
+    // Handle finishing drawing a new redaction
     if (!isDrawing || !startPoint) return
 
     const pos = getMousePos(e)
@@ -352,7 +426,21 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
         width: Math.abs(width),
         height: Math.abs(height)
       }
-      setRedactions(prev => [...prev, newRedaction])
+      
+      // Check for overlapping redactions
+      const hasOverlap = redactions.some(existing => 
+        newRedaction.x < existing.x + existing.width &&
+        newRedaction.x + newRedaction.width > existing.x &&
+        newRedaction.y < existing.y + existing.height &&
+        newRedaction.y + newRedaction.height > existing.y
+      )
+      
+      if (!hasOverlap) {
+        setRedactions(prev => [...prev, newRedaction])
+      } else {
+        // Show feedback that overlapping isn't allowed
+        alert('Redaction boxes cannot overlap. Please place this box in a different area.')
+      }
     }
 
     setIsDrawing(false)
@@ -564,6 +652,8 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
         <h3 className="font-semibold text-blue-800 mb-2">How to redact:</h3>
         <ul className="text-sm text-blue-700 space-y-1">
           <li>• Click and drag to draw redaction boxes over personal information</li>
+          <li>• Click and drag existing boxes to move them to new positions</li>
+          <li>• Redaction boxes cannot overlap - place them in different areas</li>
           <li>• Redact names, addresses, phone numbers, account numbers, etc.</li>
           <li>• You can remove redactions by clicking the X button below</li>
           <li>• When finished, click "Continue" to proceed</li>
@@ -584,8 +674,9 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
         )}
       </div>
 
-      {/* Canvas */}
-      <div className="border border-gray-300 rounded-lg overflow-hidden bg-gray-100">
+      {/* Canvas Container */}
+      <div className="border border-gray-300 rounded-lg overflow-hidden bg-gray-100 relative">
+        {/* Base Canvas - Static image and existing redactions */}
         <canvas
           ref={canvasRef}
           width={canvasSize.width}
@@ -598,6 +689,18 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onWheel={handleWheel}
+          style={{ cursor: isMoving ? 'grabbing' : 'crosshair' }}
+        />
+        
+        {/* Overlay Canvas - Preview redactions and moving boxes */}
+        <canvas
+          width={canvasSize.width}
+          height={canvasSize.height}
+          className="absolute top-0 left-0 pointer-events-none"
+          style={{
+            left: `calc(50% - ${canvasSize.width / 2}px)`,
+            top: `calc(50% - ${canvasSize.height / 2}px)`
+          }}
         />
       </div>
 
