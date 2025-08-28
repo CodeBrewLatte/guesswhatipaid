@@ -359,7 +359,10 @@ export default function UploadPage() {
                       <span className="font-medium">Region:</span> {userRegion}
                     </div>
                     <div>
-                      <span className="font-medium">Price:</span> ${uploadData.metadata.priceCents}
+                      <span className="font-medium">Price:</span> ${(Number(uploadData.metadata.priceCents) / 100).toFixed(2)}
+                      <span className="text-xs text-gray-500 ml-2">
+                        (stored as {Number(uploadData.metadata.priceCents).toLocaleString()} cents)
+                      </span>
                     </div>
                     {uploadData.metadata.unit && (
                       <div>
