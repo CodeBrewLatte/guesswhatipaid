@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Format contracts for frontend
-    const items = contracts.map(contract => ({
+    const items = contracts.map((contract: any) => ({
       id: contract.id,
       category: contract.category,
       region: contract.region,
