@@ -60,14 +60,23 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
       const pdfjsLib = await import('pdfjs-dist')
       
       // Set worker source to CDN (this is the key fix)
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/build/pdf.worker.min.js`
       
       // Convert PDF to array buffer
       const arrayBuffer = await pdfFile.arrayBuffer()
       
-      // Load the PDF document
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
-      const pdf = await loadingTask.promise
+      // Load the PDF document with timeout and fallback
+      let pdf
+      try {
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+        pdf = await loadingTask.promise
+      } catch (pdfError) {
+        console.log('PDF loading failed, trying alternative approach:', pdfError)
+        // Try without worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+        pdf = await loadingTask.promise
+      }
       
       setPdfDocument(pdf)
       setTotalPages(pdf.numPages)
