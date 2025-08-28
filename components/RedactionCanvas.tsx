@@ -281,7 +281,8 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
       onComplete(redactedFile, scaledRedactions)
     } catch (error) {
       console.error('Error creating redacted file:', error)
-      alert(`Error creating redacted file: ${error.message}. Please try again.`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`Error creating redacted file: ${errorMessage}. Please try again.`)
     } finally {
       setIsProcessing(false)
     }
