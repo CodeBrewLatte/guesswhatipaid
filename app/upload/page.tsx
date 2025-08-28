@@ -29,6 +29,7 @@ interface UploadData {
     vendorName: string
     takenOn: string
     tags: string[]
+    dealRating: number | null
   }
 }
 
@@ -48,7 +49,8 @@ export default function UploadPage() {
       description: '',
       vendorName: '',
       takenOn: '',
-      tags: []
+      tags: [],
+      dealRating: null
     }
   })
   const [submitting, setSubmitting] = useState(false)
@@ -182,7 +184,8 @@ export default function UploadPage() {
         description: '',
         vendorName: '',
         takenOn: '',
-        tags: []
+        tags: [],
+        dealRating: null
       }
     })
     setCurrentStep('upload')
@@ -360,14 +363,23 @@ export default function UploadPage() {
                     </div>
                     <div>
                       <span className="font-medium">Price:</span> ${(Number(uploadData.metadata.priceCents) / 100).toFixed(2)}
-                      <span className="text-xs text-gray-500 ml-2">
-                        (stored as {Number(uploadData.metadata.priceCents).toLocaleString()} cents)
-                      </span>
                     </div>
                     {uploadData.metadata.unit && (
                       <div>
                         <span className="font-medium">Unit:</span> {uploadData.metadata.unit}
                         {uploadData.metadata.quantity && ` (${uploadData.metadata.quantity})`}
+                      </div>
+                    )}
+                    {uploadData.metadata.dealRating && (
+                      <div>
+                        <span className="font-medium">Deal Rating:</span> {uploadData.metadata.dealRating}/5
+                        <span className="text-xs text-gray-500 ml-2">
+                          {uploadData.metadata.dealRating === 1 && '😞 Ripped off'}
+                          {uploadData.metadata.dealRating === 2 && '😕 Expensive'}
+                          {uploadData.metadata.dealRating === 3 && '😐 Fair'}
+                          {uploadData.metadata.dealRating === 4 && '🙂 Good'}
+                          {uploadData.metadata.dealRating === 5 && '😍 Stellar!'}
+                        </span>
                       </div>
                     )}
                   </div>

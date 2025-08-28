@@ -17,16 +17,16 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
     description: '',
     vendorName: '',
     takenOn: '',
-    tags: [] as string[]
+    tags: [] as string[],
+    dealRating: null as number | null
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [categories, setCategories] = useState<Array<{name: string, count: number} | string>>([])
   const [regions, setRegions] = useState<Array<{name: string, count: number} | string>>([])
   const [newTag, setNewTag] = useState('')
   
-  // Enhanced price input state
-  const [priceInput, setPriceInput] = useState('')
-  const [pricePreview, setPricePreview] = useState('')
+  // Deal rating state
+  const [dealRating, setDealRating] = useState<number | null>(null)
 
   // Helper function to safely extract category/region name and value
   const getItemName = (item: {name: string, count: number} | string) => {
@@ -37,48 +37,10 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
     return typeof item === 'string' ? item : item.name
   }
 
-  // Enhanced price handling
-  const handlePriceChange = (value: string) => {
-    // Only allow numbers, decimals, and backspace
-    const cleanValue = value.replace(/[^0-9.]/g, '')
-    
-    // Prevent multiple decimal points
-    const parts = cleanValue.split('.')
-    if (parts.length > 2) return
-    
-    // Limit decimal places to 2
-    if (parts[1] && parts[1].length > 2) return
-    
-    setPriceInput(cleanValue)
-    
-    // Convert to cents and update form data
-    if (cleanValue && !isNaN(parseFloat(cleanValue))) {
-      const dollars = parseFloat(cleanValue)
-      const cents = Math.round(dollars * 100)
-      setFormData(prev => ({ ...prev, priceCents: cents.toString() }))
-      
-      // Format preview
-      setPricePreview(`$${dollars.toFixed(2)} (${cents.toLocaleString()} cents)`)
-      
-      // Debug logging
-      console.log(`💰 Price Input: $${dollars.toFixed(2)} → ${cents.toLocaleString()} cents`)
-    } else {
-      setFormData(prev => ({ ...prev, priceCents: '' }))
-      setPricePreview('')
-    }
-    
-    // Clear price error if it exists
-    if (errors.priceCents) {
-      setErrors(prev => ({ ...prev, priceCents: '' }))
-    }
-  }
-
-  // Format price input on blur
-  const handlePriceBlur = () => {
-    if (priceInput && !isNaN(parseFloat(priceInput))) {
-      const formatted = parseFloat(priceInput).toFixed(2)
-      setPriceInput(formatted)
-    }
+  // Handle deal rating change
+  const handleDealRatingChange = (rating: number) => {
+    setDealRating(rating)
+    setFormData(prev => ({ ...prev, dealRating: rating }))
   }
 
   // Fetch categories and regions
@@ -130,6 +92,11 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
     if (userRegion === 'Not Set') {
       newErrors.region = 'You must set your state before uploading contracts'
     }
+    
+    // Check if deal rating is selected
+    if (!formData.dealRating) {
+      newErrors.dealRating = 'Please rate how good this deal was'
+    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -139,11 +106,6 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
     e.preventDefault()
     
     if (validateForm()) {
-      // Show confirmation of what's being submitted
-      const priceInDollars = (Number(formData.priceCents) / 100).toFixed(2)
-      console.log(`🚀 Submitting contract with price: $${priceInDollars} (${formData.priceCents} cents)`)
-      console.log(`📊 Price breakdown: ${priceInDollars} dollars = ${formData.priceCents} cents`)
-      
       onComplete(formData)
     }
   }
@@ -175,20 +137,7 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Price System Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-blue-800 mb-2">💰 New Price Input System</h3>
-        <p className="text-xs text-blue-700">
-          Enter prices in dollars (e.g., 300.00 for $300). The system automatically converts to cents for storage.
-          This prevents confusion and ensures accurate pricing.
-        </p>
-        <div className="mt-2 text-xs text-blue-600">
-          <strong>Examples:</strong><br/>
-          • Type "300" → $300.00 (30,000 cents)<br/>
-          • Type "150.50" → $150.50 (15,050 cents)<br/>
-          • Type "0.99" → $0.99 (99 cents)
-        </div>
-      </div>
+
 
       {/* Category and Region */}
       <div className="grid md:grid-cols-2 gap-6">
@@ -254,55 +203,25 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Price (USD) *
           </label>
-          <p className="text-xs text-gray-500 mb-2">
-            Enter the price in dollars (e.g., 300.00 for $300)
-          </p>
           <div className="relative">
             <span className="absolute left-3 top-2 text-gray-500">$</span>
             <input
-              type="text" // Changed to text to allow decimal input
-              value={priceInput}
-              onChange={(e) => handlePriceChange(e.target.value)}
-              onBlur={handlePriceBlur} // Call onBlur to format on exit
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.priceCents ? (Number(formData.priceCents) / 100).toFixed(2) : ''}
+              onChange={(e) => {
+                const dollars = parseFloat(e.target.value) || 0
+                const cents = Math.round(dollars * 100)
+                handleInputChange('priceCents', cents.toString())
+              }}
               className={`input-field pl-8 ${errors.priceCents ? 'border-red-500' : ''}`}
               placeholder="300.00"
-              title="Enter price in dollars (e.g., 300.00 for $300)"
             />
           </div>
           {errors.priceCents && (
             <p className="mt-1 text-sm text-red-600">{errors.priceCents}</p>
           )}
-          {!errors.priceCents && !formData.priceCents && (
-            <p className="mt-1 text-xs text-gray-500">
-              Minimum price: $1.00
-            </p>
-          )}
-          {!errors.priceCents && formData.priceCents && Number(formData.priceCents) > 1000000 && (
-            <p className="mt-1 text-xs text-yellow-600">
-              ⚠️ High price detected: ${(Number(formData.priceCents) / 100).toFixed(2)}
-            </p>
-          )}
-          {pricePreview && (
-            <p className="mt-1 text-xs text-gray-600">{pricePreview}</p>
-          )}
-          {!pricePreview && priceInput && (
-            <p className="mt-1 text-xs text-gray-500">
-              Enter a valid price to see the conversion
-            </p>
-          )}
-          <p className="mt-1 text-xs text-blue-600">
-            💡 The system automatically converts your dollar amount to cents for storage
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setPriceInput('300.00')
-              handlePriceChange('300.00')
-            }}
-            className="mt-1 text-xs text-blue-600 hover:text-blue-800 underline"
-          >
-            Try example: $300.00
-          </button>
         </div>
 
         <div>
@@ -341,6 +260,44 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
             <p className="mt-1 text-sm text-red-600">{errors.quantity}</p>
           )}
         </div>
+      </div>
+
+      {/* Deal Rating */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          How good was this deal? *
+        </label>
+        <p className="text-xs text-gray-500 mb-3">
+          Rate your satisfaction with this price (1 = ripped off, 5 = stellar deal)
+        </p>
+        <div className="flex space-x-2">
+          {[1, 2, 3, 4, 5].map((rating) => (
+            <button
+              key={rating}
+              type="button"
+              onClick={() => handleDealRatingChange(rating)}
+              className={`w-12 h-12 rounded-lg border-2 transition-colors ${
+                dealRating === rating
+                  ? 'border-primary-500 bg-primary-100 text-primary-700'
+                  : 'border-gray-300 hover:border-gray-400 text-gray-600'
+              }`}
+            >
+              {rating}
+            </button>
+          ))}
+        </div>
+        {dealRating && (
+          <p className="mt-2 text-sm text-gray-600">
+            {dealRating === 1 && '😞 Ripped off - Way overpriced'}
+            {dealRating === 2 && '😕 Expensive - Higher than expected'}
+            {dealRating === 3 && '😐 Fair - About what I expected'}
+            {dealRating === 4 && '🙂 Good - Better than expected'}
+            {dealRating === 5 && '😍 Stellar - Amazing deal!'}
+          </p>
+        )}
+        {errors.dealRating && (
+          <p className="mt-1 text-sm text-red-600">{errors.dealRating}</p>
+        )}
       </div>
 
       {/* Description */}
@@ -428,17 +385,7 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
         )}
       </div>
 
-      {/* Price Summary */}
-      {formData.priceCents && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-green-800 mb-2">✅ Price Summary</h3>
-          <p className="text-xs text-green-700">
-            <strong>You entered:</strong> ${(Number(formData.priceCents) / 100).toFixed(2)}<br/>
-            <strong>Will be stored as:</strong> {Number(formData.priceCents).toLocaleString()} cents<br/>
-            <strong>Displayed as:</strong> ${(Number(formData.priceCents) / 100).toFixed(2)}
-          </p>
-        </div>
-      )}
+
 
       {/* Actions */}
       <div className="flex justify-between pt-6">
@@ -453,7 +400,6 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
         <button
           type="submit"
           className="btn-primary"
-          title={formData.priceCents ? `Submit contract with price: $${(Number(formData.priceCents) / 100).toFixed(2)}` : 'Submit contract'}
         >
           Continue →
         </button>
