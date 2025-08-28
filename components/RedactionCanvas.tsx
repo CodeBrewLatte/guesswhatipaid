@@ -446,10 +446,10 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
           <li>• <strong>Only the redacted file will be uploaded to protect your privacy</strong></li>
         </ul>
         {fileType === 'pdf' && (
-          <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
-            <p className="text-sm text-green-800">
-              <strong>PDF Note:</strong> Now showing your actual uploaded PDF content! 
-              Draw redaction boxes over any sensitive information you want to hide.
+          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+            <p className="text-sm text-blue-800">
+              <strong>PDF Note:</strong> Currently showing a preview with your PDF's real dimensions and page count. 
+              The actual PDF content rendering is being developed. You can still redact over sensitive areas.
             </p>
           </div>
         )}
