@@ -8,6 +8,120 @@ declare global {
   var __prisma: any;
 }
 
+export async function GET(request: NextRequest) {
+  const prisma = getPrismaClient();
+  
+  try {
+    // Explicitly connect to ensure clean connection
+    await prisma.$connect();
+    
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const pageSize = parseInt(searchParams.get('pageSize') || '20');
+    const category = searchParams.get('category');
+    const region = searchParams.get('region');
+    const q = searchParams.get('q');
+    const min = searchParams.get('min');
+    const max = searchParams.get('max');
+    const sort = searchParams.get('sort') || 'newest';
+    
+    // Build where clause for filtering
+    const where: any = {
+      status: 'APPROVED' // Only show approved contracts
+    };
+    
+    if (category) where.category = category;
+    if (region) where.region = region;
+    if (q) {
+      where.OR = [
+        { description: { contains: q, mode: 'insensitive' } },
+        { vendorName: { contains: q, mode: 'insensitive' } }
+      ];
+    }
+    if (min || max) {
+      where.priceCents = {};
+      if (min) where.priceCents.gte = parseInt(min) * 100;
+      if (max) where.priceCents.lte = parseInt(max) * 100;
+    }
+    
+    // Build order by clause
+    let orderBy: any = {};
+    if (sort === 'newest') orderBy.createdAt = 'desc';
+    else if (sort === 'oldest') orderBy.createdAt = 'asc';
+    else if (sort === 'price-low') orderBy.priceCents = 'asc';
+    else if (sort === 'price-high') orderBy.priceCents = 'desc';
+    
+    // Get contracts with pagination
+    const [contracts, total] = await Promise.all([
+      prisma.contract.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: {
+          _count: {
+            select: { reviews: true }
+          }
+        }
+      }),
+      prisma.contract.count({ where })
+    ]);
+    
+    // Calculate stats
+    const stats = await prisma.contract.aggregate({
+      where: { status: 'APPROVED' },
+      _avg: { priceCents: true },
+      _min: { priceCents: true },
+      _max: { priceCents: true }
+    });
+    
+    // Format contracts for frontend
+    const items = contracts.map(contract => ({
+      id: contract.id,
+      category: contract.category,
+      region: contract.region,
+      priceCents: contract.priceCents,
+      unit: contract.unit,
+      quantity: contract.quantity,
+      thumbKey: contract.thumbKey,
+      description: contract.description,
+      vendorName: contract.vendorName,
+      takenOn: contract.takenOn,
+      createdAt: contract.createdAt,
+      priceDisplay: `$${(contract.priceCents / 100).toFixed(0)}`,
+      pricePerUnit: contract.unit && contract.quantity 
+        ? `$${(contract.priceCents / contract.quantity).toFixed(2)}/${contract.unit}`
+        : undefined,
+      _count: contract._count
+    }));
+    
+    return NextResponse.json({
+      items,
+      pagination: {
+        page,
+        pageSize,
+        total
+      },
+      stats: stats._avg.priceCents ? {
+        avg: Math.round(stats._avg.priceCents / 100),
+        min: Math.round(stats._min.priceCents / 100),
+        max: Math.round(stats._max.priceCents / 100)
+      } : null,
+      locked: false // All approved contracts are visible
+    });
+    
+  } catch (error) {
+    console.error('Error fetching contracts:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch contracts' },
+      { status: 500 }
+    );
+  } finally {
+    // Explicitly disconnect to ensure clean connection
+    await prisma.$disconnect();
+  }
+}
+
 function getPrismaClient() {
   if (process.env.NODE_ENV === 'production') {
     // In production (Vercel), create a new client each time
