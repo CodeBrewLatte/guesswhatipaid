@@ -49,9 +49,8 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     try {
       console.log('Loading PDF for redaction...')
       
-      // Instead of trying to render the PDF, create a smart preview
-      // This approach is much more reliable and doesn't require PDF.js
-      createSmartPDFPreview(pdfFile)
+      // Create a hybrid approach: show actual PDF + redaction canvas
+      createHybridPDFView(pdfFile)
       
     } catch (error) {
       console.error('Error in PDF processing:', error)
@@ -60,53 +59,25 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     }
   }
 
-  const createSmartPDFPreview = (pdfFile: File) => {
-    // Create a realistic contract preview that users can redact over
-    // This is much more reliable than trying to render the actual PDF
+  const createHybridPDFView = (pdfFile: File) => {
+    // Create a hybrid view: actual PDF for viewing + canvas for redaction
     const canvas = document.createElement('canvas')
     canvas.width = 800
     canvas.height = 600
     const ctx = canvas.getContext('2d')
     
     if (ctx) {
-      // Create a professional-looking contract preview
-      ctx.fillStyle = '#ffffff'
+      // Create a transparent overlay canvas for redaction
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
       ctx.fillRect(0, 0, 800, 600)
       
-      // Add realistic contract header
-      ctx.fillStyle = '#000000'
-      ctx.font = 'bold 28px Arial'
-      ctx.textAlign = 'left'
-      ctx.fillText('CONTRACT AGREEMENT', 50, 50)
-      
-      // Add contract details that typically need redaction
-      ctx.font = '16px Arial'
-      ctx.fillText('This document contains sensitive information that should be redacted', 50, 90)
-      ctx.fillText('before sharing. Click and drag to create redaction boxes over:', 50, 115)
-      
-      // Sample content that looks like real contracts
-      ctx.font = '14px Arial'
-      ctx.fillText('Contractor Name: [REDACTED]', 50, 150)
-      ctx.fillText('Business Address: [REDACTED]', 50, 175)
-      ctx.fillText('Phone Number: [REDACTED]', 50, 200)
-      ctx.fillText('Email: [REDACTED]', 50, 225)
-      ctx.fillText('Tax ID: [REDACTED]', 50, 250)
-      ctx.fillText('Bank Account: [REDACTED]', 50, 275)
-      ctx.fillText('Contract Value: $[REDACTED]', 50, 300)
-      ctx.fillText('Payment Terms: [REDACTED]', 50, 325)
-      
-      // Add instructions
+      // Add redaction instructions on the canvas
       ctx.fillStyle = '#0066cc'
-      ctx.font = '12px Arial'
-      ctx.fillText('→ Draw redaction boxes over any sensitive information above', 50, 370)
-      ctx.fillText('→ Your original PDF will be redacted and uploaded', 50, 395)
-      ctx.fillText('→ Only the redacted version will be visible to others', 50, 420)
-      
-      // Add a note about the actual PDF
-      ctx.fillStyle = '#666666'
-      ctx.font = '11px Arial'
-      ctx.fillText(`File: ${pdfFile.name}`, 50, 470)
-      ctx.fillText('Size: ' + (pdfFile.size / 1024).toFixed(1) + ' KB', 50, 485)
+      ctx.font = 'bold 16px Arial'
+      ctx.textAlign = 'center'
+      ctx.fillText('REDACTION CANVAS', 400, 30)
+      ctx.fillText('Draw redaction boxes over sensitive areas below', 400, 55)
+      ctx.fillText('Your actual PDF is displayed underneath', 400, 80)
     }
     
     const dataUrl = canvas.toDataURL()
@@ -114,10 +85,61 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     setCanvasSize({ width: 800, height: 600 })
     setScale(1)
     
-    // Create download link for the original PDF
-    createDownloadLink(pdfFile)
+    // Create the actual PDF viewer
+    createPDFViewer(pdfFile)
     
-    console.log('Smart PDF preview created successfully')
+    console.log('Hybrid PDF view created successfully')
+  }
+
+  const createPDFViewer = (pdfFile: File) => {
+    // Create an iframe to show the actual PDF content
+    const pdfViewer = document.createElement('div')
+    pdfViewer.style.marginTop = '20px'
+    pdfViewer.style.border = '2px solid #e5e7eb'
+    pdfViewer.style.borderRadius = '8px'
+    pdfViewer.style.overflow = 'hidden'
+    pdfViewer.style.backgroundColor = '#f9fafb'
+    
+    // Add header
+    const header = document.createElement('div')
+    header.style.padding = '12px 16px'
+    header.style.backgroundColor = '#f3f4f6'
+    header.style.borderBottom = '1px solid #e5e7eb'
+    header.style.fontWeight = 'bold'
+    header.style.color = '#374151'
+    header.textContent = `📄 ${pdfFile.name} - Your Actual PDF Content`
+    pdfViewer.appendChild(header)
+    
+    // Create iframe for PDF
+    const iframe = document.createElement('iframe')
+    iframe.src = URL.createObjectURL(pdfFile)
+    iframe.style.width = '100%'
+    iframe.style.height = '500px'
+    iframe.style.border = 'none'
+    iframe.style.backgroundColor = 'white'
+    pdfViewer.appendChild(iframe)
+    
+    // Add instructions below
+    const instructions = document.createElement('div')
+    instructions.style.padding = '12px 16px'
+    instructions.style.backgroundColor = '#fef3c7'
+    instructions.style.borderTop = '1px solid #f59e0b'
+    instructions.style.fontSize = '14px'
+    instructions.style.color = '#92400e'
+    instructions.innerHTML = `
+      <strong>How to redact:</strong><br>
+      1. View your PDF content above<br>
+      2. Draw redaction boxes on the canvas below<br>
+      3. The redactions will be applied to your actual PDF<br>
+      4. Only the redacted version will be uploaded
+    `
+    pdfViewer.appendChild(instructions)
+    
+    // Insert PDF viewer after the canvas
+    const canvasElement = canvasRef.current
+    if (canvasElement && canvasElement.parentNode) {
+      canvasElement.parentNode.insertBefore(pdfViewer, canvasElement.nextSibling)
+    }
   }
 
   const createBasicPDFPreview = (pdfFile: File) => {
@@ -425,13 +447,13 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
         {fileType === 'pdf' && (
           <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
             <p className="text-sm text-green-800 mb-3">
-              <strong>PDF Note:</strong> Your PDF is ready for redaction! 
-              Draw redaction boxes over the preview content. Your original PDF will be automatically redacted and uploaded.
+              <strong>PDF Note:</strong> Your actual PDF content is displayed below! 
+              You can see your real document and draw redaction boxes over sensitive areas.
             </p>
             <div className="text-sm text-gray-600 mb-3">
-              <span className="font-medium">📄 PDF Redaction Ready</span>
+              <span className="font-medium">📄 Hybrid PDF Redaction</span>
               <br />
-              <span>Draw redaction boxes over sensitive areas in the preview below</span>
+              <span>View your PDF content above, then redact sensitive areas on the canvas below</span>
             </div>
           </div>
         )}
