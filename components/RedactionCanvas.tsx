@@ -72,7 +72,9 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
           
           console.log('PDF loaded with pdf-lib, pages:', pages.length, 'dimensions:', width, 'x', height)
           
-          // For now, create a realistic document preview based on actual PDF dimensions
+          // TODO: This shows sample content instead of actual PDF content
+          // The system extracts real PDF metadata (pages, dimensions) but falls back to sample text
+          // To show real content, we need to implement PDF.js rendering without worker issues
           const canvas = document.createElement('canvas')
           const scale = Math.min(800 / width, 1000 / height)
           canvas.width = width * scale
