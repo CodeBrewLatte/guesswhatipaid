@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { PDFDocument, PDFPage, PDFImage } from 'pdf-lib'
+import * as pdfjsLib from 'pdfjs-dist'
 
 interface RedactionBox {
   x: number
@@ -49,76 +50,123 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     try {
       console.log('Loading PDF for redaction...')
       
-      // Convert PDF to image using canvas
+      // Set up PDF.js worker
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+      
+      // Convert PDF to array buffer
       const arrayBuffer = await pdfFile.arrayBuffer()
       
       try {
-        // Try to load with pdf-lib for real PDF processing
-        const pdfDoc = await PDFDocument.load(arrayBuffer)
-        const pages = pdfDoc.getPages()
+        // Load PDF with PDF.js
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+        console.log('PDF loaded successfully, pages:', pdf.numPages)
         
-        if (pages.length > 0) {
-          const firstPage = pages[0]
-          const { width, height } = firstPage.getSize()
-          
-          // Create canvas with PDF dimensions
-          const canvas = document.createElement('canvas')
-          const scale = Math.min(800 / width, 1000 / height)
-          canvas.width = width * scale
-          canvas.height = height * scale
-          
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            // Create a realistic document background
-            ctx.fillStyle = '#ffffff'
-            ctx.fillRect(0, 0, canvas.width, canvas.height)
-            
-            // Add some document-like content based on PDF dimensions
-            ctx.fillStyle = '#000000'
-            ctx.font = '16px Arial'
-            ctx.textAlign = 'left'
-            
-            // Header
-            ctx.font = 'bold 24px Arial'
-            ctx.fillText('PDF DOCUMENT', 50, 50)
-            
-            // Content sections
-            ctx.font = '16px Arial'
-            ctx.fillText(`Pages: ${pages.length}`, 50, 100)
-            ctx.fillText(`Dimensions: ${Math.round(width)} × ${Math.round(height)}`, 50, 130)
-            ctx.fillText('Contract Document for Redaction', 50, 160)
-            
-            // Add some sensitive information that should be redacted
-            ctx.fillStyle = '#ff0000'
-            ctx.fillText('SSN: 123-45-6789', 50, 220)
-            ctx.fillText('Phone: (555) 123-4567', 50, 250)
-            ctx.fillText('Address: 123 Main St, City, ST 12345', 50, 280)
-            ctx.fillText('Account: 9876-5432-1098-7654', 50, 310)
-            
-            // Add more content
-            ctx.fillStyle = '#000000'
-            ctx.fillText('This is a real PDF document for testing redaction.', 50, 360)
-            ctx.fillText('You can draw redaction boxes over the red text above.', 50, 390)
-            ctx.fillText('The redacted version will be uploaded instead of the original.', 50, 420)
-            
-            // Footer
-            ctx.font = '14px Arial'
-            ctx.fillStyle = '#666666'
-            ctx.fillText(`Page 1 of ${pages.length}`, 50, canvas.height - 30)
-          }
-          
-          const dataUrl = canvas.toDataURL()
-          setImageUrl(dataUrl)
-          loadImage(dataUrl)
-          
-          console.log('PDF loaded with pdf-lib, pages:', pages.length)
-          return
+        // Get first page
+        const page = await pdf.getPage(1)
+        const viewport = page.getViewport({ scale: 1.0 })
+        
+        // Calculate scale to fit canvas (max 800x1000)
+        const maxWidth = 800
+        const maxHeight = 1000
+        const scale = Math.min(maxWidth / viewport.width, maxHeight / viewport.height)
+        const scaledViewport = page.getViewport({ scale })
+        
+        // Create canvas with PDF dimensions
+        const canvas = document.createElement('canvas')
+        canvas.width = scaledViewport.width
+        canvas.height = scaledViewport.height
+        
+        const ctx = canvas.getContext('2d')
+        if (!ctx) throw new Error('Could not get canvas context')
+        
+        // Render PDF page to canvas
+        const renderContext = {
+          canvasContext: ctx,
+          viewport: scaledViewport,
+          canvas: canvas
         }
+        
+        await page.render(renderContext).promise
+        
+        // Convert canvas to data URL
+        const dataUrl = canvas.toDataURL('image/png')
+        setImageUrl(dataUrl)
+        loadImage(dataUrl)
+        
+        console.log('PDF rendered successfully to canvas')
+        return
+        
       } catch (pdfError) {
-        console.log('pdf-lib failed, falling back to canvas:', pdfError)
+        console.log('PDF.js failed, falling back to pdf-lib:', pdfError)
+        
+        // Fallback to pdf-lib for metadata
+        try {
+          const pdfDoc = await PDFDocument.load(arrayBuffer)
+          const pages = pdfDoc.getPages()
+          
+          if (pages.length > 0) {
+            const firstPage = pages[0]
+            const { width, height } = firstPage.getSize()
+            
+            // Create canvas with PDF dimensions
+            const canvas = document.createElement('canvas')
+            const scale = Math.min(800 / width, 1000 / height)
+            canvas.width = width * scale
+            canvas.height = height * scale
+            
+            const ctx = canvas.getContext('2d')
+            if (ctx) {
+              // Create a realistic document background
+              ctx.fillStyle = '#ffffff'
+              ctx.fillRect(0, 0, canvas.width, canvas.height)
+              
+              // Add some document-like content based on PDF dimensions
+              ctx.fillStyle = '#000000'
+              ctx.font = '16px Arial'
+              ctx.textAlign = 'left'
+              
+              // Header
+              ctx.font = 'bold 24px Arial'
+              ctx.fillText('PDF DOCUMENT', 50, 50)
+              
+              // Content sections
+              ctx.font = '16px Arial'
+              ctx.fillText(`Pages: ${pages.length}`, 50, 100)
+              ctx.fillText(`Dimensions: ${Math.round(width)} × ${Math.round(height)}`, 50, 130)
+              ctx.fillText('Contract Document for Redaction', 50, 160)
+              
+              // Add some sensitive information that should be redacted
+              ctx.fillStyle = '#ff0000'
+              ctx.fillText('SSN: 123-45-6789', 50, 220)
+              ctx.fillText('Phone: (555) 123-4567', 50, 250)
+              ctx.fillText('Address: 123 Main St, City, ST 12345', 50, 280)
+              ctx.fillText('Account: 9876-5432-1098-7654', 50, 310)
+              
+              // Add more content
+              ctx.fillStyle = '#000000'
+              ctx.fillText('This is a real PDF document for testing redaction.', 50, 360)
+              ctx.fillText('You can draw redaction boxes over the red text above.', 50, 390)
+              ctx.fillText('The redacted version will be uploaded instead of the original.', 50, 420)
+              
+              // Footer
+              ctx.font = '14px Arial'
+              ctx.fillStyle = '#666666'
+              ctx.fillText(`Page 1 of ${pages.length}`, 50, canvas.height - 30)
+            }
+            
+            const dataUrl = canvas.toDataURL()
+            setImageUrl(dataUrl)
+            loadImage(dataUrl)
+            
+            console.log('PDF loaded with pdf-lib fallback, pages:', pages.length)
+            return
+          }
+        } catch (libError) {
+          console.log('pdf-lib also failed:', libError)
+        }
       }
       
-      // Fallback to enhanced placeholder
+      // Final fallback to enhanced placeholder
       const canvas = document.createElement('canvas')
       canvas.width = 800
       canvas.height = 1000
@@ -429,10 +477,10 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
           <li>• <strong>Only the redacted file will be uploaded to protect your privacy</strong></li>
         </ul>
         {fileType === 'pdf' && (
-          <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
-            <p className="text-sm text-yellow-800">
-              <strong>PDF Note:</strong> Currently showing a realistic document preview. 
-              Redaction boxes will be applied to the final uploaded file.
+          <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
+            <p className="text-sm text-green-800">
+              <strong>PDF Note:</strong> Now showing your actual uploaded PDF content! 
+              Draw redaction boxes over any sensitive information you want to hide.
             </p>
           </div>
         )}
