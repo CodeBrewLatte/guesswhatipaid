@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     
     // Build WHERE clause for filtering
     let whereConditions = ['c.status = $1'];
-    let queryParams = ['APPROVED'];
+    let queryParams: (string | number)[] = ['APPROVED'];
     let paramIndex = 2;
     
     if (category) {
