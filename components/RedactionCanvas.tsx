@@ -66,8 +66,8 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
         const pdfjsLib = await import('pdfjs-dist')
         console.log('PDF.js imported successfully, version:', pdfjsLib.version)
         
-        // Set up PDF.js worker - disable worker for now to avoid CDN issues
-        // pdfjsLib.GlobalWorkerOptions.workerSrc = false
+        // Set up PDF.js worker - use a reliable CDN
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`
         
         // Load PDF with PDF.js
         console.log('Loading PDF document...')
