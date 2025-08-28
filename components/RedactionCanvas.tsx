@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { PDFDocument, PDFPage, PDFImage } from 'pdf-lib'
-import * as pdfjsLib from 'pdfjs-dist'
 
 interface RedactionBox {
   x: number
@@ -56,13 +55,16 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
         return
       }
       
-      // Set up PDF.js worker
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
-      
       // Convert PDF to array buffer
       const arrayBuffer = await pdfFile.arrayBuffer()
       
       try {
+        // Dynamically import PDF.js only on client side
+        const pdfjsLib = await import('pdfjs-dist')
+        
+        // Set up PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+        
         // Load PDF with PDF.js
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
         console.log('PDF loaded successfully, pages:', pdf.numPages)
