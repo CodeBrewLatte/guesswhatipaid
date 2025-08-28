@@ -30,7 +30,7 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
 
   // Determine file type and load file
   useEffect(() => {
-    if (file) {
+    if (file && typeof window !== 'undefined') {
       const isPDF = file.type === 'application/pdf'
       setFileType(isPDF ? 'pdf' : 'image')
       
@@ -49,6 +49,12 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
   const loadPDFAsImage = async (pdfFile: File) => {
     try {
       console.log('Loading PDF for redaction...')
+      
+      // Ensure we're on the client side
+      if (typeof window === 'undefined') {
+        console.log('Not on client side, skipping PDF loading')
+        return
+      }
       
       // Set up PDF.js worker
       pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
@@ -242,6 +248,8 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
   }
 
   const loadImage = (url: string) => {
+    if (typeof window === 'undefined') return
+    
     const img = new Image()
     img.onload = () => {
       // Calculate canvas size to fit the image (max 800x600)
@@ -260,6 +268,8 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
 
   // Draw canvas content
   const drawCanvas = useCallback(() => {
+    if (typeof window === 'undefined') return
+    
     const canvas = canvasRef.current
     if (!canvas || !imageUrl) return
 
@@ -294,6 +304,8 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
   }, [drawCanvas])
 
   const getMousePos = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (typeof window === 'undefined') return { x: 0, y: 0 }
+    
     const canvas = canvasRef.current
     if (!canvas) return { x: 0, y: 0 }
 
