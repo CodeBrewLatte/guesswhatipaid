@@ -12,39 +12,31 @@ export function UploadDropzone({ onFileUpload }: UploadDropzoneProps) {
   const [error, setError] = useState('')
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setError('')
-    
-    if (acceptedFiles.length === 0) {
-      setError('No valid files selected')
-      return
+    if (acceptedFiles.length > 0) {
+      const file = acceptedFiles[0]
+      
+      // Check if it's a PDF and block it with friendly message
+      if (file.type === 'application/pdf') {
+        alert('📱 PDFs are not supported. Please take a photo with your phone instead!\n\nThis gives you a better redaction experience and works perfectly on mobile devices.')
+        return
+      }
+      
+      // Only accept images
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file (JPEG, PNG, etc.)')
+        return
+      }
+      
+      onFileUpload(file)
     }
-
-    const file = acceptedFiles[0]
-    
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
-    if (!allowedTypes.includes(file.type)) {
-      setError('Invalid file type. Only PDF, JPG, and PNG are allowed.')
-      return
-    }
-
-    // Validate file size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError('File size must be less than 10MB')
-      return
-    }
-
-    onFileUpload(file)
   }, [onFileUpload])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png'],
-      'application/pdf': ['.pdf']
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.bmp', '.webp', '.heic']
     },
-    maxFiles: 1,
-    maxSize: 10 * 1024 * 1024 // 10MB
+    multiple: false
   })
 
   return (
@@ -66,14 +58,17 @@ export function UploadDropzone({ onFileUpload }: UploadDropzoneProps) {
             Drop your file here...
           </p>
         ) : (
-          <div>
-            <p className="text-lg text-gray-600 mb-2">
-              Drag and drop your file here, or click to select
-            </p>
-            <p className="text-sm text-gray-500">
-              Supports PDF, JPG, and PNG files up to 10MB
-            </p>
+                  <div>
+          <p className="text-lg text-gray-600 mb-2">
+            Drag and drop your contract photo here, or click to select
+          </p>
+          <p className="text-sm text-gray-500">
+            Supports JPEG, PNG, HEIC files up to 10MB
+          </p>
+          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+            📱 <strong>Mobile Optimized:</strong> Works perfectly on phones!
           </div>
+        </div>
         )}
       </div>
 
@@ -84,8 +79,9 @@ export function UploadDropzone({ onFileUpload }: UploadDropzoneProps) {
       )}
 
       <div className="mt-4 text-sm text-gray-500">
-        <p>• Accepted formats: PDF, JPG, PNG</p>
+        <p>• Accepted formats: JPEG, PNG, HEIC</p>
         <p>• Maximum file size: 10MB</p>
+        <p>• 📱 Take photos directly from your phone for best results</p>
         <p>• We'll help you redact personal information in the next step</p>
       </div>
     </div>

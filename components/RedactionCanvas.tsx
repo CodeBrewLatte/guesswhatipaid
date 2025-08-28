@@ -27,6 +27,7 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
   const [fileType, setFileType] = useState<'image' | 'pdf'>('image')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [zoom, setZoom] = useState(1)
 
   // Determine file type and load file
   useEffect(() => {
@@ -331,20 +332,100 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     const width = pos.x - startPoint.x
     const height = pos.y - startPoint.y
 
-    // Only add redaction if it has meaningful size
-    if (Math.abs(width) > 10 && Math.abs(height) > 10) {
+    if (Math.abs(width) > 5 && Math.abs(height) > 5) {
       const newRedaction: RedactionBox = {
-        x: width > 0 ? startPoint.x : pos.x,
-        y: height > 0 ? startPoint.y : pos.y,
+        x: Math.min(startPoint.x, pos.x),
+        y: Math.min(startPoint.y, pos.y),
         width: Math.abs(width),
         height: Math.abs(height)
       }
-
       setRedactions(prev => [...prev, newRedaction])
     }
 
     setIsDrawing(false)
     setStartPoint(null)
+  }
+
+  // Touch event handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    if (e.touches.length === 1) {
+      const touch = e.touches[0]
+      const pos = getTouchPos(touch)
+      setIsDrawing(true)
+      setStartPoint(pos)
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    if (!isDrawing || !startPoint || e.touches.length !== 1) return
+
+    const touch = e.touches[0]
+    const pos = getTouchPos(touch)
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    // Clear canvas and redraw
+    drawCanvas()
+
+    // Draw preview rectangle
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const width = pos.x - startPoint.x
+    const height = pos.y - startPoint.y
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+    ctx.fillRect(startPoint.x, startPoint.y, width, height)
+    
+    ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'
+    ctx.lineWidth = 2
+    ctx.strokeRect(startPoint.x, startPoint.y, width, height)
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    if (!isDrawing || !startPoint) return
+
+    const touch = e.changedTouches[0]
+    const pos = getTouchPos(touch)
+    const width = pos.x - startPoint.x
+    const height = pos.y - startPoint.y
+
+    if (Math.abs(width) > 5 && Math.abs(height) > 5) {
+      const newRedaction: RedactionBox = {
+        x: Math.min(startPoint.x, pos.x),
+        y: Math.min(startPoint.y, pos.y),
+        width: Math.abs(width),
+        height: Math.abs(height)
+      }
+      setRedactions(prev => [...prev, newRedaction])
+    }
+
+    setIsDrawing(false)
+    setStartPoint(null)
+  }
+
+  // Wheel event handler for zoom
+  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? 0.9 : 1.1
+    setZoom(prev => Math.max(0.5, Math.min(3, prev * delta)))
+  }
+
+  // Helper function for touch positions
+  const getTouchPos = (touch: React.Touch) => {
+    if (typeof window === 'undefined') return { x: 0, y: 0 }
+    
+    const canvas = canvasRef.current
+    if (!canvas) return { x: 0, y: 0 }
+
+    const rect = canvas.getBoundingClientRect()
+    return {
+      x: (touch.clientX - rect.left) / zoom,
+      y: (touch.clientY - rect.top) / zoom
+    }
   }
 
   const removeRedaction = (index: number) => {
@@ -498,6 +579,10 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onWheel={handleWheel}
         />
       </div>
 
