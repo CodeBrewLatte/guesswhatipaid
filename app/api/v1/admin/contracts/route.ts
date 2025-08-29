@@ -78,9 +78,11 @@ export async function GET(request: NextRequest) {
         c."createdAt",
         c."updatedAt",
         up."displayName",
-        up.email as userEmail
+        up.email as userEmail,
+        rm."redactedFileName"
       FROM "Contract" c
       LEFT JOIN "UserProfile" up ON c."uploaderEmail" = up.email
+      LEFT JOIN "RedactionMetadata" rm ON c.id = rm."contractId"
       ${whereClause}
       ORDER BY c."createdAt" DESC
     `, queryParams);
@@ -96,6 +98,7 @@ export async function GET(request: NextRequest) {
       status: row.status,
       createdAt: row.createdAt,
       thumbKey: row.thumbKey,
+      redactedFileName: row.redactedFileName,
       user: {
         email: row.userEmail || row.uploaderEmail,
         displayName: row.displayName

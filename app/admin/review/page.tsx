@@ -15,6 +15,7 @@ interface Contract {
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   createdAt: string
   thumbKey?: string
+  redactedFileName?: string
   user: {
     email: string
     displayName?: string
@@ -305,28 +306,28 @@ export default function AdminReviewPage() {
                   <div className="text-sm text-gray-600 mb-2">
                     <span className="font-medium">Contract Image:</span>
                     <span className="ml-2 text-xs text-gray-400">
-                      (thumbKey: {contract.thumbKey || 'null'})
+                      (Redacted: {contract.redactedFileName || 'No redaction'})
                     </span>
                   </div>
-                  {contract.thumbKey ? (
+                  {contract.redactedFileName ? (
                     <div className="relative inline-block">
                       <img
-                        src={getStorageUrl(contract.thumbKey)}
-                        alt="Contract preview"
+                        src={getStorageUrl(contract.redactedFileName)}
+                        alt="Redacted contract preview"
                         className="w-32 h-24 object-cover rounded-lg border border-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => openImageModal(contract.thumbKey!)}
+                        onClick={() => openImageModal(contract.redactedFileName!)}
                         onError={(e) => {
-                          console.error('Image failed to load:', getStorageUrl(contract.thumbKey!))
+                          console.error('Redacted image failed to load:', getStorageUrl(contract.redactedFileName!))
                           // Fallback to a placeholder if image fails to load
                           const target = e.target as HTMLImageElement
                           target.style.display = 'none'
                           const fallback = document.createElement('div')
                           fallback.className = 'w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs'
-                          fallback.innerHTML = 'Image failed to load'
-                          fallback.onclick = () => openImageModal(contract.thumbKey!)
+                          fallback.innerHTML = 'Redacted image failed to load'
+                          fallback.onclick = () => openImageModal(contract.redactedFileName!)
                           target.parentNode?.appendChild(fallback)
                         }}
-                        onLoad={() => console.log('Image loaded successfully:', getStorageUrl(contract.thumbKey!))}
+                        onLoad={() => console.log('Redacted image loaded successfully:', getStorageUrl(contract.redactedFileName!))}
                       />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                         <div className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
@@ -336,7 +337,7 @@ export default function AdminReviewPage() {
                     </div>
                   ) : (
                     <div className="w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs">
-                      No image uploaded
+                      No redacted image available
                     </div>
                   )}
                 </div>
