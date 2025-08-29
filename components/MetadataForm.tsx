@@ -249,7 +249,7 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
           </label>
           <input
             type="number"
-            step="0.01"
+            step="1"
             min="0"
             value={formData.quantity}
             onChange={(e) => handleInputChange('quantity', e.target.value)}
