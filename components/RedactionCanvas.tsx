@@ -17,6 +17,7 @@ interface RedactionCanvasProps {
 
 export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const overlayRef = useRef<HTMLCanvasElement>(null)
   const [redactions, setRedactions] = useState<RedactionBox[]>([])
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -249,6 +250,44 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
     img.src = url
   }
 
+  // Draw preview on overlay canvas (no image redraw)
+  const drawPreview = useCallback((startPoint: { x: number; y: number }, currentPos: { x: number; y: number }) => {
+    if (typeof window === 'undefined') return
+    
+    const overlay = overlayRef.current
+    if (!overlay) return
+
+    const ctx = overlay.getContext('2d')
+    if (!ctx) return
+
+    // Clear the overlay
+    ctx.clearRect(0, 0, overlay.width, overlay.height)
+
+    // Draw the preview rectangle
+    const width = currentPos.x - startPoint.x
+    const height = currentPos.y - startPoint.y
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+    ctx.fillRect(startPoint.x, startPoint.y, width, height)
+    
+    ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'
+    ctx.lineWidth = 2
+    ctx.strokeRect(startPoint.x, startPoint.y, width, height)
+  }, [])
+
+  // Clear the overlay canvas
+  const clearOverlay = useCallback(() => {
+    if (typeof window === 'undefined') return
+    
+    const overlay = overlayRef.current
+    if (!overlay) return
+
+    const ctx = overlay.getContext('2d')
+    if (!ctx) return
+
+    ctx.clearRect(0, 0, overlay.width, overlay.height)
+  }, [])
+
   // Draw canvas content
   const drawCanvas = useCallback(() => {
     if (typeof window === 'undefined') return
@@ -385,22 +424,8 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
       drawCanvas() // Redraw to show hover effects
     }
 
-    // Only redraw every few pixels to reduce flickering
-    const width = pos.x - startPoint.x
-    const height = pos.y - startPoint.y
-    
-    // Check if we've moved enough to warrant a redraw (every 3 pixels)
-    if (Math.abs(width) % 3 === 0 || Math.abs(height) % 3 === 0) {
-      drawCanvas()
-      
-      // Draw the preview rectangle on top
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-      ctx.fillRect(startPoint.x, startPoint.y, width, height)
-      
-      ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'
-      ctx.lineWidth = 2
-      ctx.strokeRect(startPoint.x, startPoint.y, width, height)
-    }
+    // Draw preview on overlay (no base canvas redraw)
+    drawPreview(startPoint, pos)
   }
 
   const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -409,6 +434,7 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
       setIsMoving(false)
       setMovingBoxIndex(null)
       setMoveOffset(null)
+      clearOverlay() // Clear any overlay content
       return
     }
     
@@ -443,6 +469,8 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
       }
     }
 
+    // Clear the overlay preview
+    clearOverlay()
     setIsDrawing(false)
     setStartPoint(null)
   }
@@ -694,6 +722,7 @@ export function RedactionCanvas({ file, onComplete, onBack }: RedactionCanvasPro
         
         {/* Overlay Canvas - Preview redactions and moving boxes */}
         <canvas
+          ref={overlayRef}
           width={canvasSize.width}
           height={canvasSize.height}
           className="absolute top-0 left-0 pointer-events-none"
