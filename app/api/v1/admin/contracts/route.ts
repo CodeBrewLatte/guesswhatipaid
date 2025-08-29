@@ -95,6 +95,7 @@ export async function GET(request: NextRequest) {
       vendorName: row.vendorName,
       status: row.status,
       createdAt: row.createdAt,
+      thumbKey: row.thumbKey,
       user: {
         email: row.userEmail || row.uploaderEmail,
         displayName: row.displayName

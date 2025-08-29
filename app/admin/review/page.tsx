@@ -14,6 +14,7 @@ interface Contract {
   vendorName?: string
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   createdAt: string
+  thumbKey?: string
   user: {
     email: string
     displayName?: string
@@ -29,6 +30,8 @@ export default function AdminReviewPage() {
   const [filter, setFilter] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING')
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminCheckLoading, setAdminCheckLoading] = useState(true)
+  const [imageModalOpen, setImageModalOpen] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string>('')
 
   const fetchContracts = async () => {
     setLoading(true)
@@ -87,6 +90,16 @@ export default function AdminReviewPage() {
       return session?.access_token || ''
     }
     return ''
+  }
+
+  const openImageModal = (thumbKey: string) => {
+    setSelectedImage(thumbKey)
+    setImageModalOpen(true)
+  }
+
+  const closeImageModal = () => {
+    setImageModalOpen(false)
+    setSelectedImage('')
   }
 
   const handleStatusChange = async (contractId: string, status: 'APPROVED' | 'REJECTED') => {
@@ -281,6 +294,28 @@ export default function AdminReviewPage() {
                   <p className="text-gray-700 mb-3">{contract.description}</p>
                 )}
 
+                {/* Contract Image */}
+                {contract.thumbKey && (
+                  <div className="mb-4">
+                    <div className="text-sm text-gray-600 mb-2">
+                      <span className="font-medium">Contract Image:</span>
+                    </div>
+                    <div className="relative inline-block">
+                      <img
+                        src={`https://${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]}/storage/v1/object/public/contracts/${contract.thumbKey}`}
+                        alt="Contract preview"
+                        className="w-32 h-24 object-cover rounded-lg border border-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => openImageModal(contract.thumbKey!)}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <div className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                          Click to expand
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {contract.vendorName && (
                   <p className="text-sm text-gray-600 mb-3">
                     <span className="font-medium">Vendor:</span> {contract.vendorName}
@@ -335,6 +370,27 @@ export default function AdminReviewPage() {
           </div>
         )}
       </div>
+
+      {/* Image Modal */}
+      {imageModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="relative max-w-4xl max-h-full">
+            <button
+              onClick={closeImageModal}
+              className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full p-2 transition-colors z-10"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img
+              src={`https://${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]}/storage/v1/object/public/contracts/${selectedImage}`}
+              alt="Contract full view"
+              className="max-w-full max-h-full object-contain rounded-lg"
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
