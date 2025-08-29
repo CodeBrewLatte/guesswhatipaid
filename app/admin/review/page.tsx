@@ -42,10 +42,11 @@ export default function AdminReviewPage() {
           'Authorization': `Bearer ${token}`
         }
       })
-      if (response.ok) {
-        const data = await response.json()
-        setContracts(data)
-      }
+              if (response.ok) {
+          const data = await response.json()
+          console.log('Contracts fetched:', data)
+          setContracts(data)
+        }
     } catch (error) {
       console.error('Error fetching contracts:', error)
     } finally {
@@ -300,11 +301,14 @@ export default function AdminReviewPage() {
                 )}
 
                 {/* Contract Image */}
-                {contract.thumbKey && (
-                  <div className="mb-4">
-                    <div className="text-sm text-gray-600 mb-2">
-                      <span className="font-medium">Contract Image:</span>
-                    </div>
+                <div className="mb-4">
+                  <div className="text-sm text-gray-600 mb-2">
+                    <span className="font-medium">Contract Image:</span>
+                    <span className="ml-2 text-xs text-gray-400">
+                      (thumbKey: {contract.thumbKey || 'null'})
+                    </span>
+                  </div>
+                  {contract.thumbKey ? (
                     <div className="relative inline-block">
                       <img
                         src={getStorageUrl(contract.thumbKey)}
@@ -312,15 +316,17 @@ export default function AdminReviewPage() {
                         className="w-32 h-24 object-cover rounded-lg border border-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => openImageModal(contract.thumbKey!)}
                         onError={(e) => {
+                          console.error('Image failed to load:', getStorageUrl(contract.thumbKey!))
                           // Fallback to a placeholder if image fails to load
                           const target = e.target as HTMLImageElement
                           target.style.display = 'none'
                           const fallback = document.createElement('div')
                           fallback.className = 'w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs'
-                          fallback.innerHTML = 'Image not available'
+                          fallback.innerHTML = 'Image failed to load'
                           fallback.onclick = () => openImageModal(contract.thumbKey!)
                           target.parentNode?.appendChild(fallback)
                         }}
+                        onLoad={() => console.log('Image loaded successfully:', getStorageUrl(contract.thumbKey!))}
                       />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                         <div className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
@@ -328,8 +334,12 @@ export default function AdminReviewPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs">
+                      No image uploaded
+                    </div>
+                  )}
+                </div>
 
                 {contract.vendorName && (
                   <p className="text-sm text-gray-600 mb-3">
