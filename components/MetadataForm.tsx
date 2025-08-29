@@ -209,14 +209,14 @@ export function MetadataForm({ onComplete, onBack, userRegion }: MetadataFormPro
               type="number"
               step="0.01"
               min="0"
-              value={formData.priceCents ? (Number(formData.priceCents) / 100).toFixed(2) : ''}
+              value={formData.priceCents ? (Number(formData.priceCents) / 100) : ''}
               onChange={(e) => {
                 const dollars = parseFloat(e.target.value) || 0
                 const cents = Math.round(dollars * 100)
                 handleInputChange('priceCents', cents.toString())
               }}
               className={`input-field pl-8 ${errors.priceCents ? 'border-red-500' : ''}`}
-              placeholder="300.00"
+              placeholder="300"
             />
           </div>
           {errors.priceCents && (
