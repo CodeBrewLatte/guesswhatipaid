@@ -106,7 +106,9 @@ export default function AdminReviewPage() {
 
   // Utility function to get Supabase storage URL
   const getStorageUrl = (thumbKey: string) => {
-    return `https://ldwwsxhxozncosptuqut.supabase.co/storage/v1/object/public/contracts/${thumbKey}`
+    // Properly encode the filename to handle spaces and special characters
+    const encodedFilename = encodeURIComponent(thumbKey)
+    return `https://ldwwsxhxozncosptuqut.supabase.co/storage/v1/object/public/contracts/${encodedFilename}`
   }
 
   const handleStatusChange = async (contractId: string, status: 'APPROVED' | 'REJECTED') => {
