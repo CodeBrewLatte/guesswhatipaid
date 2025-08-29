@@ -102,6 +102,11 @@ export default function AdminReviewPage() {
     setSelectedImage('')
   }
 
+  // Utility function to get Supabase storage URL
+  const getStorageUrl = (thumbKey: string) => {
+    return `https://ldwwsxhxozncosptuqut.supabase.co/storage/v1/object/public/contracts/${thumbKey}`
+  }
+
   const handleStatusChange = async (contractId: string, status: 'APPROVED' | 'REJECTED') => {
     try {
       const token = await getAuthToken()
@@ -302,10 +307,20 @@ export default function AdminReviewPage() {
                     </div>
                     <div className="relative inline-block">
                       <img
-                        src={`https://${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]}/storage/v1/object/public/contracts/${contract.thumbKey}`}
+                        src={getStorageUrl(contract.thumbKey)}
                         alt="Contract preview"
                         className="w-32 h-24 object-cover rounded-lg border border-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => openImageModal(contract.thumbKey!)}
+                        onError={(e) => {
+                          // Fallback to a placeholder if image fails to load
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                          const fallback = document.createElement('div')
+                          fallback.className = 'w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs'
+                          fallback.innerHTML = 'Image not available'
+                          fallback.onclick = () => openImageModal(contract.thumbKey!)
+                          target.parentNode?.appendChild(fallback)
+                        }}
                       />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                         <div className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
@@ -384,7 +399,7 @@ export default function AdminReviewPage() {
               </svg>
             </button>
             <img
-              src={`https://${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]}/storage/v1/object/public/contracts/${selectedImage}`}
+              src={getStorageUrl(selectedImage)}
               alt="Contract full view"
               className="max-w-full max-h-full object-contain rounded-lg"
             />
