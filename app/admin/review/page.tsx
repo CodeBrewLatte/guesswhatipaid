@@ -319,7 +319,11 @@ export default function AdminReviewPage() {
                         className="w-32 h-24 object-cover rounded-lg border border-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => openImageModal(contract.redactedFileName!)}
                         onError={(e) => {
-                          console.error('Redacted image failed to load:', getStorageUrl(contract.redactedFileName!))
+                          const imageUrl = getStorageUrl(contract.redactedFileName!)
+                          console.error('Redacted image failed to load:', imageUrl)
+                          console.error('Original filename:', contract.redactedFileName)
+                          console.error('Encoded filename:', encodeURIComponent(contract.redactedFileName!))
+                          
                           // Fallback to a placeholder if image fails to load
                           const target = e.target as HTMLImageElement
                           target.style.display = 'none'
@@ -336,6 +340,29 @@ export default function AdminReviewPage() {
                           Click to expand
                         </div>
                       </div>
+                      
+                      {/* Debug button */}
+                      <button
+                        onClick={() => {
+                          const url = getStorageUrl(contract.redactedFileName!)
+                          console.log('Testing image URL:', url)
+                          fetch(url)
+                            .then(response => {
+                              console.log('Image fetch response:', response.status, response.statusText)
+                              if (response.ok) {
+                                console.log('✅ Image exists and is accessible')
+                              } else {
+                                console.log('❌ Image fetch failed:', response.status)
+                              }
+                            })
+                            .catch(error => {
+                              console.error('❌ Image fetch error:', error)
+                            })
+                        }}
+                        className="mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                      >
+                        Test Image URL
+                      </button>
                     </div>
                   ) : (
                     <div className="w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs">
