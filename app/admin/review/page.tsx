@@ -106,8 +106,14 @@ export default function AdminReviewPage() {
 
   // Utility function to get Supabase storage URL
   const getStorageUrl = (thumbKey: string) => {
-    // Properly encode the filename to handle spaces and special characters
-    const encodedFilename = encodeURIComponent(thumbKey)
+    // Clean the filename by removing invisible characters and normalizing
+    const cleanFilename = thumbKey
+      .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove zero-width spaces and other invisible chars
+      .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
+      .trim() // Remove leading/trailing spaces
+    
+    // Properly encode the cleaned filename
+    const encodedFilename = encodeURIComponent(cleanFilename)
     return `https://ldwwsxhxozncosptuqut.supabase.co/storage/v1/object/public/contracts/${encodedFilename}`
   }
 
