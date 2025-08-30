@@ -359,11 +359,11 @@ export default function AdminReviewPage() {
                   }}
                   onLoad={() => console.log('Contract image loaded successfully:', getStorageUrl(contract.storageFileName!))}
                 />
-                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                 <div className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                   Click to expand
-                 </div>
-               </div>
+                
+                {/* Simple click hint below the image */}
+                <div className="text-center mt-1">
+                  <span className="text-xs text-gray-500">Click image to expand</span>
+                </div>
                
                {/* Debug button */}
                <button
