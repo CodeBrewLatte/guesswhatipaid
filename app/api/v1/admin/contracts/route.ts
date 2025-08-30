@@ -88,23 +88,39 @@ export async function GET(request: NextRequest) {
     `, queryParams);
     console.log('SQL query executed successfully, rows returned:', contractsResult.rows.length);
     
-    const contracts = contractsResult.rows.map(row => ({
-      id: row.id,
-      category: row.category,
-      region: row.region,
-      priceCents: row.priceCents,
-      description: row.description,
-      vendorName: row.vendorName,
-      status: row.status,
-      createdAt: row.createdAt,
-      thumbKey: row.thumbKey,
-      redactedFileName: row.redactedFileName,
-      user: {
-        email: row.userEmail || row.uploaderEmail,
-        displayName: row.displayName
-      },
-      tags: [] // Simplified - no tags for now
-    }));
+    const contracts = contractsResult.rows.map(row => {
+      // Extract filename from thumbKey (which is the full Supabase storage URL)
+      let storageFileName = null;
+      if (row.thumbKey) {
+        try {
+          // thumbKey is the full URL, extract just the filename
+          const url = new URL(row.thumbKey);
+          storageFileName = url.pathname.split('/').pop();
+        } catch (error) {
+          console.error('Error parsing thumbKey URL:', row.thumbKey, error);
+          storageFileName = null;
+        }
+      }
+      
+      return {
+        id: row.id,
+        category: row.category,
+        region: row.region,
+        priceCents: row.priceCents,
+        description: row.description,
+        vendorName: row.vendorName,
+        status: row.status,
+        createdAt: row.createdAt,
+        thumbKey: row.thumbKey,
+        storageFileName: storageFileName, // The actual filename in Supabase storage
+        redactedFileName: row.redactedFileName,
+        user: {
+          email: row.userEmail || row.uploaderEmail,
+          displayName: row.displayName
+        },
+        tags: [] // Simplified - no tags for now
+      };
+    });
     
     console.log(`Found ${contracts.length} contracts with status: ${status}`);
     

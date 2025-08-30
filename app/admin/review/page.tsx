@@ -15,6 +15,7 @@ interface Contract {
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
   createdAt: string
   thumbKey?: string
+  storageFileName?: string // The actual filename in Supabase storage
   redactedFileName?: string
   user: {
     email: string
@@ -310,71 +311,71 @@ export default function AdminReviewPage() {
                 )}
 
                 {/* Contract Image */}
-                <div className="mb-4">
-                  <div className="text-sm text-gray-600 mb-2">
-                    <span className="font-medium">Contract Image:</span>
-                    <span className="ml-2 text-xs text-gray-400">
-                      (Redacted: {contract.redactedFileName || 'No redaction'})
-                    </span>
-                  </div>
-                  {contract.redactedFileName ? (
-                    <div className="relative inline-block">
-                      <img
-                        src={getStorageUrl(contract.redactedFileName)}
-                        alt="Redacted contract preview"
-                        className="w-32 h-24 object-cover rounded-lg border border-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => openImageModal(contract.redactedFileName!)}
-                        onError={(e) => {
-                          const imageUrl = getStorageUrl(contract.redactedFileName!)
-                          console.error('Redacted image failed to load:', imageUrl)
-                          console.error('Original filename:', contract.redactedFileName)
-                          console.error('Encoded filename:', encodeURIComponent(contract.redactedFileName!))
-                          
-                          // Fallback to a placeholder if image fails to load
-                          const target = e.target as HTMLImageElement
-                          target.style.display = 'none'
-                          const fallback = document.createElement('div')
-                          fallback.className = 'w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs'
-                          fallback.innerHTML = 'Redacted image failed to load'
-                          fallback.onclick = () => openImageModal(contract.redactedFileName!)
-                          target.parentNode?.appendChild(fallback)
-                        }}
-                        onLoad={() => console.log('Redacted image loaded successfully:', getStorageUrl(contract.redactedFileName!))}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                        <div className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                          Click to expand
-                        </div>
+                        <div className="mb-4">
+          <div className="text-sm text-gray-600 mb-2">
+            <span className="font-medium">Contract Image:</span>
+            <span className="ml-2 text-xs text-gray-400">
+              (Storage: {contract.storageFileName || 'No storage file'})
+            </span>
+          </div>
+          {contract.storageFileName ? (
+            <div className="relative inline-block">
+              <img
+                src={getStorageUrl(contract.storageFileName)}
+                alt="Contract preview"
+                className="w-32 h-24 object-cover rounded-lg border border-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => openImageModal(contract.storageFileName!)}
+                onError={(e) => {
+                  const imageUrl = getStorageUrl(contract.storageFileName!)
+                  console.error('Contract image failed to load:', imageUrl)
+                  console.error('Storage filename:', contract.storageFileName)
+                  console.error('Encoded filename:', encodeURIComponent(contract.storageFileName!))
+                  
+                  // Fallback to a placeholder if image fails to load
+                  const target = e.target as HTMLImageElement
+                  target.style.display = 'none'
+                  const fallback = document.createElement('div')
+                  fallback.className = 'w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs'
+                  fallback.innerHTML = 'Contract image failed to load'
+                  fallback.onclick = () => openImageModal(contract.storageFileName!)
+                  target.parentNode?.appendChild(fallback)
+                }}
+                onLoad={() => console.log('Contract image loaded successfully:', getStorageUrl(contract.storageFileName!))}
+              />
+                                     <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                 <div className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                   Click to expand
+                 </div>
+               </div>
+               
+               {/* Debug button */}
+               <button
+                 onClick={() => {
+                   const url = getStorageUrl(contract.storageFileName!)
+                   console.log('Testing image URL:', url)
+                   fetch(url)
+                     .then(response => {
+                       console.log('Image fetch response:', response.status, response.statusText)
+                       if (response.ok) {
+                         console.log('✅ Image exists and is accessible')
+                       } else {
+                         console.log('❌ Image fetch failed:', response.status)
+                       }
+                     })
+                     .catch(error => {
+                       console.error('❌ Image fetch error:', error)
+                     })
+                 }}
+                 className="mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+               >
+                 Test Image URL
+               </button>
+                    </div>
+                                      ) : (
+                      <div className="w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs">
+                        No contract image available
                       </div>
-                      
-                      {/* Debug button */}
-                      <button
-                        onClick={() => {
-                          const url = getStorageUrl(contract.redactedFileName!)
-                          console.log('Testing image URL:', url)
-                          fetch(url)
-                            .then(response => {
-                              console.log('Image fetch response:', response.status, response.statusText)
-                              if (response.ok) {
-                                console.log('✅ Image exists and is accessible')
-                              } else {
-                                console.log('❌ Image fetch failed:', response.status)
-                              }
-                            })
-                            .catch(error => {
-                              console.error('❌ Image fetch error:', error)
-                            })
-                        }}
-                        className="mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
-                      >
-                        Test Image URL
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs">
-                      No redacted image available
-                    </div>
-                  )}
+                    )}
                 </div>
 
                 {contract.vendorName && (
