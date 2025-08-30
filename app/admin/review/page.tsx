@@ -95,8 +95,9 @@ export default function AdminReviewPage() {
     return ''
   }
 
-  const openImageModal = (thumbKey: string) => {
-    setSelectedImage(thumbKey)
+  const openImageModal = (storageFileName: string) => {
+    console.log('Opening modal with storage filename:', storageFileName)
+    setSelectedImage(storageFileName)
     setImageModalOpen(true)
   }
 
@@ -433,8 +434,8 @@ export default function AdminReviewPage() {
         )}
       </div>
 
-      {/* Image Modal */}
-      {imageModalOpen && (
+            {/* Image Modal */}
+      {imageModalOpen && selectedImage && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <div className="relative max-w-4xl max-h-full">
             <button
@@ -445,10 +446,16 @@ export default function AdminReviewPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
+            <div className="text-white text-center mb-4">
+              <p>Debug: Modal open with filename: {selectedImage}</p>
+              <p>Full URL: {getStorageUrl(selectedImage)}</p>
+            </div>
             <img
               src={getStorageUrl(selectedImage)}
               alt="Contract full view"
               className="max-w-full max-h-full object-contain rounded-lg"
+              onLoad={() => console.log('Modal image loaded successfully')}
+              onError={(e) => console.error('Modal image failed to load:', e)}
             />
           </div>
         </div>
