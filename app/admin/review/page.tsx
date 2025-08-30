@@ -96,9 +96,13 @@ export default function AdminReviewPage() {
   }
 
   const openImageModal = (storageFileName: string) => {
-    console.log('Opening modal with storage filename:', storageFileName)
+    console.log('🚀 openImageModal called!')
+    console.log('🚀 Storage filename:', storageFileName)
+    console.log('🚀 Setting selectedImage to:', storageFileName)
+    console.log('🚀 Setting imageModalOpen to true')
     setSelectedImage(storageFileName)
     setImageModalOpen(true)
+    console.log('🚀 State should now be updated')
   }
 
   const closeImageModal = () => {
@@ -247,6 +251,13 @@ export default function AdminReviewPage() {
             Review and approve/reject submitted contracts
           </p>
         </div>
+        
+        {/* Debug Info */}
+        <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded-lg">
+          <p className="text-sm text-yellow-800">
+            <strong>Debug Info:</strong> Modal State - imageModalOpen: {imageModalOpen.toString()}, selectedImage: {selectedImage || 'null'}
+          </p>
+        </div>
 
         {/* Filter Tabs */}
         <div className="mb-6">
@@ -321,28 +332,33 @@ export default function AdminReviewPage() {
           </div>
           {contract.storageFileName ? (
             <div className="relative inline-block">
-              <img
-                src={getStorageUrl(contract.storageFileName)}
-                alt="Contract preview"
-                className="w-32 h-24 object-cover rounded-lg border border-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => openImageModal(contract.storageFileName!)}
-                onError={(e) => {
-                  const imageUrl = getStorageUrl(contract.storageFileName!)
-                  console.error('Contract image failed to load:', imageUrl)
-                  console.error('Storage filename:', contract.storageFileName)
-                  console.error('Encoded filename:', encodeURIComponent(contract.storageFileName!))
-                  
-                  // Fallback to a placeholder if image fails to load
-                  const target = e.target as HTMLImageElement
-                  target.style.display = 'none'
-                  const fallback = document.createElement('div')
-                  fallback.className = 'w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs'
-                  fallback.innerHTML = 'Contract image failed to load'
-                  fallback.onclick = () => openImageModal(contract.storageFileName!)
-                  target.parentNode?.appendChild(fallback)
-                }}
-                onLoad={() => console.log('Contract image loaded successfully:', getStorageUrl(contract.storageFileName!))}
-              />
+                              <img
+                  src={getStorageUrl(contract.storageFileName)}
+                  alt="Contract preview"
+                  className="w-32 h-24 object-cover rounded-lg border border-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => {
+                    console.log('🖱️ Thumbnail clicked!')
+                    console.log('🖱️ Storage filename:', contract.storageFileName)
+                    console.log('🖱️ Calling openImageModal with:', contract.storageFileName)
+                    openImageModal(contract.storageFileName!)
+                  }}
+                  onError={(e) => {
+                    const imageUrl = getStorageUrl(contract.storageFileName!)
+                    console.error('Contract image failed to load:', imageUrl)
+                    console.error('Storage filename:', contract.storageFileName)
+                    console.error('Encoded filename:', encodeURIComponent(contract.storageFileName!))
+                    
+                    // Fallback to a placeholder if image fails to load
+                    const target = e.target as HTMLImageElement
+                    target.style.display = 'none'
+                    const fallback = document.createElement('div')
+                    fallback.className = 'w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs'
+                    fallback.innerHTML = 'Contract image failed to load'
+                    fallback.onclick = () => openImageModal(contract.storageFileName!)
+                    target.parentNode?.appendChild(fallback)
+                  }}
+                  onLoad={() => console.log('Contract image loaded successfully:', getStorageUrl(contract.storageFileName!))}
+                />
                                      <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                  <div className="bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                    Click to expand
@@ -436,24 +452,27 @@ export default function AdminReviewPage() {
 
             {/* Image Modal */}
       {imageModalOpen && selectedImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="relative max-w-4xl max-h-full">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[9999] p-4"
+          style={{ zIndex: 9999 }}
+        >
+          <div className="relative max-w-4xl max-h-full bg-white rounded-lg p-6">
             <button
               onClick={closeImageModal}
-              className="absolute top-4 right-4 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full p-2 transition-colors z-10"
+              className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition-colors z-10"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <div className="text-white text-center mb-4">
-              <p>Debug: Modal open with filename: {selectedImage}</p>
-              <p>Full URL: {getStorageUrl(selectedImage)}</p>
+            <div className="text-black text-center mb-4">
+              <p className="font-bold">Debug: Modal open with filename: {selectedImage}</p>
+              <p className="text-sm">Full URL: {getStorageUrl(selectedImage)}</p>
             </div>
             <img
               src={getStorageUrl(selectedImage)}
               alt="Contract full view"
-              className="max-w-full max-h-full object-contain rounded-lg"
+              className="max-w-full max-h-full object-contain rounded-lg border border-gray-300"
               onLoad={() => console.log('Modal image loaded successfully')}
               onError={(e) => console.error('Modal image failed to load:', e)}
             />
