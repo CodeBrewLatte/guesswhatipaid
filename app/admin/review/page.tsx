@@ -220,67 +220,74 @@ export default function AdminReviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-3">
-              <img 
-                src="/guess-logo.png" 
-                alt="Guess What I Paid Logo" 
-                className="h-8 w-8 object-contain"
-              />
-              <span className="text-2xl font-bold text-primary-600">
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            <Link href="/" className="flex items-center space-x-3 group">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <img 
+                  src="/guess-logo.png" 
+                  alt="Guess What I Paid Logo" 
+                  className="h-8 w-8 object-contain"
+                />
+              </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                 Guess What I Paid
               </span>
             </Link>
-            <div className="flex items-center space-x-4">
-              <Link href="/browse" className="text-gray-900 font-medium">
+            <nav className="flex items-center space-x-8">
+              <Link href="/browse" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 relative group">
                 Browse
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300"></span>
               </Link>
-              <Link href="/upload" className="text-gray-900 font-medium">
+              <Link href="/upload" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 relative group">
                 Upload
+                <span className="absolute -bottom-1 left-0 w-0 h-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300"></span>
               </Link>
-              <Link href="/admin/review" className="text-primary-600 font-medium">
+              <Link href="/admin/review" className="text-blue-600 font-semibold relative group">
                 Admin
+                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-blue-500"></span>
               </Link>
-            </div>
+            </nav>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-6 lg:px-8 py-12">
         {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Contract Moderation</h1>
-          <p className="text-gray-600">
-            Review and approve/reject submitted contracts
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Contract Moderation</h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Review and approve/reject submitted contracts with confidence
           </p>
         </div>
         
 
 
         {/* Filter Tabs */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+        <div className="mb-8">
+          <div className="bg-white rounded-2xl p-2 shadow-sm border border-gray-100 max-w-md mx-auto">
+            <nav className="flex">
               {(['PENDING', 'APPROVED', 'REJECTED'] as const).map((status) => (
                 <button
                   key={status}
                   onClick={() => setFilter(status)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`flex-1 py-3 px-6 rounded-xl font-medium text-sm transition-all duration-200 ${
                     filter === status
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'bg-blue-500 text-white shadow-md transform scale-105'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
                   }`}
                 >
-                  {status.charAt(0) + status.slice(1).toLowerCase()}
-                  {status === 'PENDING' && contracts.filter(c => c.status === 'PENDING').length > 0 && (
-                    <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                      {contracts.filter(c => c.status === 'PENDING').length}
-                    </span>
-                  )}
+                  <div className="flex items-center justify-center space-x-2">
+                    <span>{status.charAt(0) + status.slice(1).toLowerCase()}</span>
+                    {status === 'PENDING' && contracts.filter(c => c.status === 'PENDING').length > 0 && (
+                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold bg-white/20 text-white">
+                        {contracts.filter(c => c.status === 'PENDING').length}
+                      </span>
+                    )}
+                  </div>
                 </button>
               ))}
             </nav>
@@ -300,21 +307,24 @@ export default function AdminReviewPage() {
         ) : (
           <div className="space-y-6">
             {contracts.map((contract) => (
-              <div key={contract.id} className="card">
-                <div className="flex justify-between items-start mb-4">
+              <div key={contract.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-all duration-300 group">
+                <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {contract.category} - {contract.region}
-                    </h3>
-                    <p className="text-2xl font-bold text-primary-600">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        {contract.category} - {contract.region}
+                      </h3>
+                    </div>
+                    <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                       {formatPrice(contract.priceCents)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-500 mb-1">
                       {formatDate(contract.createdAt)}
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-600 font-medium">
                       by {contract.user.displayName || contract.user.email}
                     </div>
                   </div>
@@ -325,19 +335,20 @@ export default function AdminReviewPage() {
                 )}
 
                 {/* Contract Image */}
-                        <div className="mb-4">
-          <div className="text-sm text-gray-600 mb-2">
-            <span className="font-medium">Contract Image:</span>
-            <span className="ml-2 text-xs text-gray-400">
-              (Storage: {contract.storageFileName || 'No storage file'})
-            </span>
-          </div>
+                <div className="mb-6">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                    <span className="text-sm font-medium text-gray-700">Contract Image</span>
+                    <span className="text-xs text-gray-400">
+                      ({contract.storageFileName || 'No storage file'})
+                    </span>
+                  </div>
           {contract.storageFileName ? (
             <div className="relative inline-block">
-                              <img
+                <img
                   src={getStorageUrl(contract.storageFileName)}
                   alt="Contract preview"
-                  className="w-32 h-24 object-cover rounded-lg border border-gray-300 cursor-pointer hover:opacity-80 transition-opacity"
+                  className="w-40 h-32 object-cover rounded-xl border border-gray-200 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 group-hover:border-blue-300"
                   onClick={() => {
                     console.log('🖱️ Thumbnail clicked!')
                     console.log('🖱️ Storage filename:', contract.storageFileName)
@@ -354,17 +365,17 @@ export default function AdminReviewPage() {
                     const target = e.target as HTMLImageElement
                     target.style.display = 'none'
                     const fallback = document.createElement('div')
-                    fallback.className = 'w-32 h-24 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center text-gray-500 text-xs'
-                    fallback.innerHTML = 'Contract image failed to load'
+                    fallback.className = 'w-40 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl border border-gray-200 flex items-center justify-center text-gray-500 text-sm'
+                    fallback.innerHTML = 'Image failed to load'
                     fallback.onclick = () => openImageModal(contract.storageFileName!)
                     target.parentNode?.appendChild(fallback)
                   }}
                   onLoad={() => console.log('Contract image loaded successfully:', getStorageUrl(contract.storageFileName!))}
                 />
                 
-                {/* Simple click hint below the image */}
-                <div className="text-center mt-1">
-                  <span className="text-xs text-gray-500">Click image to expand</span>
+                {/* Click hint */}
+                <div className="text-center mt-3">
+                  <span className="text-xs text-gray-500 bg-gray-50 px-3 py-1 rounded-full">Click to expand</span>
                 </div>
                
                {/* Debug button */}
@@ -419,18 +430,28 @@ export default function AdminReviewPage() {
                 )}
 
                 {filter === 'PENDING' && (
-                  <div className="flex space-x-3">
+                  <div className="flex space-x-4 pt-4 border-t border-gray-100">
                     <button
                       onClick={() => handleStatusChange(contract.id, 'APPROVED')}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      className="flex-1 py-3 px-6 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:from-green-600 hover:to-green-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
                     >
-                      Approve
+                      <div className="flex items-center justify-center space-x-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Approve</span>
+                      </div>
                     </button>
                     <button
                       onClick={() => handleStatusChange(contract.id, 'REJECTED')}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      className="flex-1 py-3 px-6 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-medium hover:from-red-600 hover:to-red-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
                     >
-                      Reject
+                      <div className="flex items-center justify-center space-x-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span>Reject</span>
+                      </div>
                     </button>
                   </div>
                 )}
@@ -455,29 +476,39 @@ export default function AdminReviewPage() {
             {/* Image Modal */}
       {imageModalOpen && selectedImage && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[9999] p-4"
+          className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-[9999] p-6"
           style={{ zIndex: 9999 }}
         >
-          <div className="relative max-w-4xl max-h-full bg-white rounded-lg p-6">
+          <div className="relative max-w-5xl max-h-full bg-white rounded-3xl shadow-2xl overflow-hidden">
             <button
               onClick={closeImageModal}
-              className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition-colors z-10"
+              className="absolute top-6 right-6 bg-gray-800/80 hover:bg-gray-900 text-white rounded-full p-3 transition-all duration-200 z-10 backdrop-blur-sm hover:scale-110"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <div className="text-black text-center mb-4">
-              <p className="font-bold">Debug: Modal open with filename: {selectedImage}</p>
-              <p className="text-sm">Full URL: {getStorageUrl(selectedImage)}</p>
+            
+            <div className="p-8 pb-6">
+              <div className="text-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Contract Image Preview</h3>
+                <p className="text-sm text-gray-500">Full-size view for detailed review</p>
+              </div>
+              
+              <div className="bg-gray-50 rounded-2xl p-4 mb-4">
+                <p className="text-xs text-gray-600 font-mono break-all">
+                  {getStorageUrl(selectedImage)}
+                </p>
+              </div>
+              
+              <img
+                src={getStorageUrl(selectedImage)}
+                alt="Contract full view"
+                className="w-full h-auto max-h-[70vh] object-contain rounded-2xl border border-gray-200 shadow-lg"
+                onLoad={() => console.log('Modal image loaded successfully')}
+                onError={(e) => console.error('Modal image failed to load:', e)}
+              />
             </div>
-            <img
-              src={getStorageUrl(selectedImage)}
-              alt="Contract full view"
-              className="max-w-full max-h-full object-contain rounded-lg border border-gray-300"
-              onLoad={() => console.log('Modal image loaded successfully')}
-              onError={(e) => console.error('Modal image failed to load:', e)}
-            />
           </div>
         </div>
       )}
