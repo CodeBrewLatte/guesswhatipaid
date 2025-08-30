@@ -225,8 +225,15 @@ export default function AdminReviewPage() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-2xl font-bold text-primary-600">
-              You Paid What
+            <Link href="/" className="flex items-center space-x-3">
+              <img 
+                src="/guess-logo.png" 
+                alt="Guess What I Paid Logo" 
+                className="h-8 w-8 object-contain"
+              />
+              <span className="text-2xl font-bold text-primary-600">
+                Guess What I Paid
+              </span>
             </Link>
             <div className="flex items-center space-x-4">
               <Link href="/browse" className="text-gray-900 font-medium">
@@ -252,12 +259,7 @@ export default function AdminReviewPage() {
           </p>
         </div>
         
-        {/* Debug Info */}
-        <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            <strong>Debug Info:</strong> Modal State - imageModalOpen: {imageModalOpen.toString()}, selectedImage: {selectedImage || 'null'}
-          </p>
-        </div>
+
 
         {/* Filter Tabs */}
         <div className="mb-6">

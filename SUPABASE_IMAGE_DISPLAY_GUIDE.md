@@ -220,6 +220,12 @@ const sanitizeFilename = (filename: string) => {
 - **Problem**: Hard to diagnose storage access issues
 - **Solution**: Add debugging tools and detailed console logging
 
+### 5. Overlay Elements Blocking Clicks
+- **Problem**: Absolutely positioned overlays covering clickable elements
+- **Solution**: Remove blocking overlays or ensure they don't interfere with click events
+- **Example**: The "Click to expand" overlay was blocking image clicks despite being invisible
+- **Fix**: Replace with non-blocking text hints below the element
+
 ## Testing Checklist
 
 - [ ] Thumbnail displays correctly
