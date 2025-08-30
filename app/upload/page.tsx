@@ -211,103 +211,126 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="text-2xl font-bold text-primary-600">
-              You Paid What
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            <Link href="/" className="flex items-center space-x-3 group">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <img 
+                  src="/guess-logo.png" 
+                  alt="Guess What I Paid Logo" 
+                  className="h-8 w-8 object-contain"
+                />
+              </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                Guess What I Paid
+              </span>
             </Link>
-            <div className="flex items-center space-x-4">
-              <Link href="/browse" className="text-gray-900 font-medium">
+            <nav className="flex items-center space-x-8">
+              <Link href="/browse" className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 relative group">
                 Browse
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300"></span>
               </Link>
-              <Link href="/upload" className="text-primary-600 font-medium">
+              <Link href="/upload" className="text-blue-600 font-semibold relative group">
                 Upload
+                <span className="absolute -bottom-1 left-0 w-full h-0.5 bg-blue-500"></span>
               </Link>
-              <div className="flex items-center space-x-3">
-                <Link href="/profile" className="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
-                  <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+              <div className="flex items-center space-x-4">
+                <Link href="/profile" className="flex items-center space-x-3 text-gray-700 hover:text-blue-600 transition-colors duration-200 group">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center border-2 border-blue-200 group-hover:border-blue-300 transition-all duration-200">
                     {user?.user_metadata?.avatar_url ? (
                       <img 
                         src={user.user_metadata.avatar_url} 
                         alt="Profile" 
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : user?.user_metadata?.full_name ? (
-                      <span className="text-sm font-medium text-primary-600">
+                      <span className="text-sm font-medium text-blue-600">
                         {user.user_metadata.full_name.charAt(0).toUpperCase()}
                       </span>
                     ) : (
-                      <span className="text-sm font-medium text-primary-600">
+                      <span className="text-sm font-medium text-blue-600">
                         {user?.email?.charAt(0).toUpperCase()}
                       </span>
                     )}
                   </div>
                   <span className="text-sm font-medium hidden sm:block">Profile</span>
                 </Link>
-                <button onClick={() => signOut()} className="text-gray-700 hover:text-gray-900 font-medium">
+                <button onClick={() => signOut()} className="text-gray-700 hover:text-red-600 font-medium transition-colors duration-200">
                   Sign Out
                 </button>
               </div>
-            </div>
+            </nav>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-5xl mx-auto px-6 lg:px-8 py-12">
         {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center space-x-4">
-            {[
-              { key: 'upload', label: 'Upload File', icon: '📁' },
-              { key: 'redact', label: 'Redact Info', icon: '✏️' },
-              { key: 'metadata', label: 'Add Details', icon: '📝' },
-              { key: 'preview', label: 'Review', icon: '👀' },
-              { key: 'submitted', label: 'Complete', icon: '✅' }
-            ].map((step, index) => (
-              <div key={step.key} className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  currentStep === step.key 
-                    ? 'border-primary-600 bg-primary-600 text-white'
-                    : index < ['upload', 'redact', 'metadata', 'preview', 'submitted'].indexOf(currentStep)
-                    ? 'border-green-500 bg-green-500 text-white'
-                    : 'border-gray-300 bg-white text-gray-500'
-                }`}>
-                  <span className="text-sm">{step.icon}</span>
+        <div className="mb-12">
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 max-w-4xl mx-auto">
+            <div className="flex items-center justify-between">
+              {[
+                { key: 'upload', label: 'Upload File', icon: '📁' },
+                { key: 'redact', label: 'Redact Info', icon: '✏️' },
+                { key: 'metadata', label: 'Add Details', icon: '📝' },
+                { key: 'preview', label: 'Review', icon: '👀' },
+                { key: 'submitted', label: 'Complete', icon: '✅' }
+              ].map((step, index) => (
+                <div key={step.key} className="flex flex-col items-center">
+                  <div className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 ${
+                    currentStep === step.key 
+                      ? 'border-blue-500 bg-blue-500 text-white shadow-lg scale-110'
+                      : index < ['upload', 'redact', 'metadata', 'preview', 'submitted'].indexOf(currentStep)
+                      ? 'border-green-500 bg-green-500 text-white shadow-md'
+                      : 'border-gray-200 bg-white text-gray-400'
+                  }`}>
+                    <span className="text-base">{step.icon}</span>
+                  </div>
+                  <span className={`mt-3 text-sm font-medium text-center transition-colors duration-300 ${
+                    currentStep === step.key ? 'text-blue-600' : 'text-gray-500'
+                  }`}>
+                    {step.label}
+                  </span>
+                  {index < 4 && (
+                    <div className={`absolute top-6 left-1/2 w-16 h-0.5 transition-all duration-500 ${
+                      index < ['upload', 'redact', 'metadata', 'preview', 'submitted'].indexOf(currentStep)
+                        ? 'bg-green-500'
+                        : 'bg-gray-200'
+                    }`} style={{ transform: 'translateX(50%)' }} />
+                  )}
                 </div>
-                <span className={`ml-2 text-sm font-medium ${
-                  currentStep === step.key ? 'text-primary-600' : 'text-gray-500'
-                }`}>
-                  {step.label}
-                </span>
-                {index < 4 && (
-                  <div className={`ml-4 w-8 h-0.5 ${
-                    index < ['upload', 'redact', 'metadata', 'preview', 'submitted'].indexOf(currentStep)
-                      ? 'bg-green-500'
-                      : 'bg-gray-300'
-                  }`} />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Error Display */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800">{error}</p>
+          <div className="mb-8 p-6 bg-red-50 border border-red-200 rounded-2xl shadow-sm">
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <p className="text-red-800 font-medium">{error}</p>
+            </div>
           </div>
         )}
 
         {/* Step Content */}
-        <div className="card">
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
           {currentStep === 'upload' && (
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Upload Your Contract</h2>
-              <p className="text-gray-600 mb-6">
-                Upload a PDF, JPG, or PNG file of your contract, quote, or invoice. 
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl">📁</span>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Upload Your Contract</h2>
+              <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+                Upload a JPG, PNG, or HEIC image of your contract, quote, or invoice. 
                 We'll help you redact personal information in the next step.
               </p>
               <UploadDropzone onFileUpload={handleFileUpload} />
@@ -315,9 +338,12 @@ export default function UploadPage() {
           )}
 
           {currentStep === 'redact' && uploadData.file && (
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Redact Personal Information</h2>
-              <p className="text-gray-600 mb-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl">✏️</span>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Redact Personal Information</h2>
+              <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
                 Draw rectangles over any personal information like names, addresses, 
                 account numbers, or other sensitive data.
               </p>
@@ -330,34 +356,40 @@ export default function UploadPage() {
           )}
 
           {currentStep === 'metadata' && (
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Add Contract Details</h2>
-              <p className="text-gray-600 mb-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl">📝</span>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Add Contract Details</h2>
+              <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
                 Fill in the details about your contract to help others find and compare pricing.
               </p>
-                    <MetadataForm
-        onComplete={handleMetadataComplete}
-        onBack={() => setCurrentStep('redact')}
-        userRegion={userRegion}
-      />
+              <MetadataForm
+                onComplete={handleMetadataComplete}
+                onBack={() => setCurrentStep('redact')}
+                userRegion={userRegion}
+              />
             </div>
           )}
 
           {currentStep === 'preview' && (
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Review Your Submission</h2>
-              <p className="text-gray-600 mb-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl">👀</span>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Review Your Submission</h2>
+              <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
                 Review the details before submitting. You can go back to make changes.
               </p>
               
-              <div className="space-y-4 mb-6">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-semibold mb-2">File</h3>
-                  <p className="text-gray-600">{uploadData.file?.name}</p>
+              <div className="space-y-6 mb-8">
+                <div className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl border border-blue-100">
+                  <h3 className="font-semibold mb-3 text-blue-900">File</h3>
+                  <p className="text-blue-700">{uploadData.file?.name}</p>
                 </div>
                 
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-semibold mb-2">Contract Details</h3>
+                <div className="p-6 bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl border border-green-100">
+                  <h3 className="font-semibold mb-3 text-green-900">Contract Details</h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <span className="font-medium">Category:</span> {uploadData.metadata.category}
@@ -395,17 +427,17 @@ export default function UploadPage() {
                 </div>
               </div>
 
-              <div className="flex space-x-4">
+              <div className="flex space-x-6 justify-center">
                 <button
                   onClick={() => setCurrentStep('metadata')}
-                  className="btn-secondary"
+                  className="px-8 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200 border border-gray-200 hover:border-gray-300"
                 >
                   Back to Edit
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="btn-primary"
+                  className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {submitting ? 'Submitting...' : 'Submit Contract'}
                 </button>
@@ -415,24 +447,26 @@ export default function UploadPage() {
 
           {currentStep === 'submitted' && (
             <div className="text-center">
-              <div className="text-6xl mb-4">🎉</div>
-              <h2 className="text-2xl font-bold mb-4">Contract Submitted!</h2>
-              <p className="text-gray-600 mb-6">
+              <div className="w-24 h-24 bg-gradient-to-br from-green-100 to-blue-100 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                <span className="text-6xl">🎉</span>
+              </div>
+              <h2 className="text-4xl font-bold text-gray-900 mb-6">Contract Submitted!</h2>
+              <p className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto">
                 Thank you for contributing to pricing transparency! Your contract is now 
                 under review and will be available to others once approved.
               </p>
-              <p className="text-gray-500 mb-8">
+              <p className="text-gray-500 mb-8 max-w-2xl mx-auto">
                 You'll receive an email notification when your contract is approved, 
                 and then you'll have full access to browse all pricing data.
               </p>
-              <div className="flex space-x-4 justify-center">
+              <div className="flex space-x-6 justify-center">
                 <button
                   onClick={resetUpload}
-                  className="btn-secondary"
+                  className="px-8 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200 border border-gray-200 hover:border-gray-300"
                 >
                   Upload Another
                 </button>
-                <Link href="/browse" className="btn-primary">
+                <Link href="/browse" className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg inline-block">
                   Browse Contracts
                 </Link>
               </div>
